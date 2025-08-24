@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"fmt"
 	"log"
@@ -18,5 +17,3 @@ func main() {
 		log.Fatalf("Error starting web server: %v\n", err)
 	}
 }
-
-

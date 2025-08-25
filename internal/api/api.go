@@ -31,7 +31,7 @@ func (s *Server) RegisterRoutes() *http.ServeMux {
 
 func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	err := s.db.Ping()
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err != nil {

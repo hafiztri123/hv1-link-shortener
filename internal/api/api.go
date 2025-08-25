@@ -31,7 +31,8 @@ func (s *Server) RegisterRoutes() *http.ServeMux {
 
 func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	err := s.db.Ping()
-	ctx, _ := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 
 	if err != nil {
 		http.Error(w, "Database not connected", http.StatusInternalServerError)
@@ -47,5 +48,5 @@ func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Database is connected")
+	fmt.Fprintf(w, "DB and Redis is connected")
 }

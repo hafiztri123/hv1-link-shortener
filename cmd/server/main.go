@@ -1,19 +1,28 @@
 package main
 
 import (
-	"fmt"
+	"hafiztri123/app-link-shortener/internal/api"
+	"hafiztri123/app-link-shortener/internal/database"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, World")
-	})
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Note: .env file not found, using environment variable from OS")
+	}
 
-	log.Println("Starting web server on http://localhost:8080")
+	db := database.Connect()
+	defer db.Close()
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatalf("Error starting web server: %v\n", err)
+	server := api.NewServer(db)
+	router := server.RegisterRoutes()
+
+	log.Println("INFO: Listening on :8080")
+	if err := http.ListenAndServe(":8080", router); err != nil {
+		log.Fatalf("Could not start server: %v", err)
 	}
 }

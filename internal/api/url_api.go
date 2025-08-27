@@ -7,9 +7,13 @@ import (
 	"net/http"
 )
 
+func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		response.Error(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
 
-
-func (s *Server) handleCreateURL (w http.ResponseWriter, r *http.Request) {
 	var req url.CreateURLRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -31,4 +35,3 @@ func (s *Server) handleCreateURL (w http.ResponseWriter, r *http.Request) {
 
 	response.Success(w, http.StatusCreated, url)
 }
-

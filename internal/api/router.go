@@ -13,13 +13,13 @@ import (
 )
 
 type Server struct {
-	db    *sql.DB
-	redis *redis.Client
+	db         *sql.DB
+	redis      *redis.Client
 	urlService *url.Service
 }
 
 func NewServer(db *sql.DB, redis *redis.Client, urlService *url.Service) *Server {
-	return &Server{db: db, redis: redis, urlService: urlService }
+	return &Server{db: db, redis: redis, urlService: urlService}
 }
 
 func (s *Server) RegisterRoutes() *http.ServeMux {

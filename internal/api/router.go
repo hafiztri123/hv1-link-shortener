@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"hafiztri123/app-link-shortener/internal/url"
 	"log"
 	"net/http"
 	"time"
@@ -14,16 +15,18 @@ import (
 type Server struct {
 	db    *sql.DB
 	redis *redis.Client
+	urlService *url.Service
 }
 
-func NewServer(db *sql.DB, redis *redis.Client) *Server {
-	return &Server{db: db, redis: redis}
+func NewServer(db *sql.DB, redis *redis.Client, urlService *url.Service) *Server {
+	return &Server{db: db, redis: redis, urlService: urlService }
 }
 
 func (s *Server) RegisterRoutes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", s.healthCheckHandler)
+	mux.HandleFunc("/api/v1/shorten", s.handleCreateURL)
 
 	return mux
 

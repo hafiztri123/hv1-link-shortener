@@ -8,7 +8,7 @@ import (
 )
 
 func TestSuccess(t *testing.T) {
-	rr := 	httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 
 	testData := "Hello world"
 
@@ -33,7 +33,6 @@ func TestSuccess(t *testing.T) {
 	}
 }
 
-
 func TestError(t *testing.T) {
 	rr := httptest.NewRecorder()
 
@@ -57,5 +56,3 @@ func TestError(t *testing.T) {
 		t.Errorf("expected status 'error', got: %v", status)
 	}
 }
-
-

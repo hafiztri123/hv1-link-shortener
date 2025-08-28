@@ -5,14 +5,11 @@ import (
 	"hafiztri123/app-link-shortener/internal/response"
 	"hafiztri123/app-link-shortener/internal/url"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodPost)
-		response.Error(w, http.StatusMethodNotAllowed, "Method not allowed")
-		return
-	}
 
 	var req url.CreateURLRequest
 
@@ -27,11 +24,29 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := s.urlService.CreateShortURL(r.Context(), req.LongURL)
+	err = s.urlService.CreateShortURL(r.Context(), req.LongURL)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to create short URL")
 		return
 	}
 
-	response.Success(w, http.StatusCreated, url)
+	response.Success(w, "Success!, Short URL created", http.StatusCreated)
+}
+
+func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
+	shortUrl := chi.URLParam(r, "shortUrl")
+	if shortUrl == "" {
+		response.Error(w, http.StatusBadRequest, "short_url is a required field")
+		return
+	}
+
+
+	longURL, err := s.urlService.FetchLongURL(r.Context(), shortUrl)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Failed to fetch long URL")
+		return
+	}
+
+	response.Success(w, "Success!, Long URL fetched", http.StatusOK, longURL)
+
 }

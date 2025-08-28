@@ -10,6 +10,7 @@ import (
 
 func Connect() *sql.DB {
 	connStr, ok := os.LookupEnv("DATABASE_URL")
+
 	if !ok {
 		log.Fatal("DATABASE_URL environment variable not set")
 	}

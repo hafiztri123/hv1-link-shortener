@@ -29,6 +29,7 @@ func main() {
 	}
 
 	defer db.Close()
+	defer redis.Close()
 
 	server := api.NewServer(db, redis, urlService)
 	router := server.RegisterRoutes()

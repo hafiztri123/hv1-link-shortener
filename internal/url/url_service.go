@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 )
 
 type Service struct {
@@ -17,18 +16,17 @@ func NewService(repo URLRepository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) CreateShortURL(ctx context.Context, longURL string) (*URL, error) {
-	fmt.Println("longURL: ", longURL)
+func (s *Service) CreateShortURL(ctx context.Context, longURL string) error {
 	id, err := s.repo.Insert(ctx, longURL)
 
 	if err != nil {
 		log.Fatalf("Failed to insert URL: %v", err)
-		return nil, err
+		return err
 	}
 
 	offset, ok := os.LookupEnv("ID_OFFSET")
 	if !ok {
-		log.Println("ID_OFFSET Environment variable not set")
+		log.Fatal("ID_OFFSET Environment variable not set")
 	}
 
 	offsetNumber, err := strconv.Atoi(offset)
@@ -41,13 +39,29 @@ func (s *Service) CreateShortURL(ctx context.Context, longURL string) (*URL, err
 
 	err = s.repo.UpdateShortCode(ctx, id, shortUrl)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &URL{
-		ID:        id,
-		LongURL:   longURL,
-		ShortURL:  "http://localhost:8080/" + shortUrl, // TODO: changed when in production
-		CreatedAt: time.Now(),
-	}, nil
+	return nil
+}
+
+func (s *Service) FetchLongURL(ctx context.Context, shortURL string) (*string, error) {
+	offset, ok := os.LookupEnv("ID_OFFSET")
+	if !ok {
+		log.Fatal("ID_OFFSET Environment variable not set")
+	}
+
+	offsetNumber, err := strconv.Atoi(offset)
+	if err != nil {
+		log.Fatalf("Failed to convert offset to int: %v", err)
+	}
+
+	id := fromBase62(shortURL) - uint64(offsetNumber)
+
+	url, err := s.repo.GetByID(ctx, int64(id))
+	if err != nil {
+		log.Fatalf("Failed to get URL by ID: %v", err)
+	}
+
+	return &url.LongURL, nil
 }

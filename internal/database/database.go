@@ -3,17 +3,12 @@ package database
 import (
 	"database/sql"
 	"log"
-	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func Connect() *sql.DB {
-	connStr, ok := os.LookupEnv("DATABASE_URL")
+func Connect(connStr string) *sql.DB {
 
-	if !ok {
-		log.Fatal("DATABASE_URL environment variable not set")
-	}
 
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {

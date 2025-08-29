@@ -4,28 +4,33 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"hafiztri123/app-link-shortener/internal/url"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
 )
 
 type Server struct {
-	db    *sql.DB
-	redis *redis.Client
+	db         *sql.DB
+	redis      *redis.Client
+	urlService *url.Service
 }
 
-func NewServer(db *sql.DB, redis *redis.Client) *Server {
-	return &Server{db: db, redis: redis}
+func NewServer(db *sql.DB, redis *redis.Client, urlService *url.Service) *Server {
+	return &Server{db: db, redis: redis, urlService: urlService}
 }
 
-func (s *Server) RegisterRoutes() *http.ServeMux {
-	mux := http.NewServeMux()
+func (s *Server) RegisterRoutes() http.Handler {
+	r := chi.NewRouter()
 
-	mux.HandleFunc("/health", s.healthCheckHandler)
+	r.Get("/health", s.healthCheckHandler)
+	r.Post("/api/v1/url/shorten", s.handleCreateURL)
+	r.Get("/api/v1/url/{shortUrl}", s.handleFetchURL)
 
-	return mux
+	return r
 
 }
 

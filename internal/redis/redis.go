@@ -22,5 +22,7 @@ func NewClient(ctx context.Context) (*redis.Client, error) {
 		return nil, err
 	}
 
+	log.Println("SUCCESS: Connect to Redis")
+
 	return rdb, nil
 }

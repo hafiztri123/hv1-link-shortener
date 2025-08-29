@@ -12,7 +12,7 @@ func TestSuccess(t *testing.T) {
 
 	testData := "Hello world"
 
-	Success(rr, http.StatusOK, testData)
+	Success(rr, "Success", http.StatusOK, testData)
 
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)

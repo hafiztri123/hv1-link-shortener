@@ -8,3 +8,11 @@ type URL struct {
 	LongURL   string
 	CreatedAt time.Time
 }
+
+type CreateURLRequest struct {
+	LongURL string `json:"long_url"`
+}
+
+type CreateURLResponse struct {
+	ShortURL string `json:"short_url"`
+}

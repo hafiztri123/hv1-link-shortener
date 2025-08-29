@@ -40,7 +40,6 @@ func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	longURL, err := s.urlService.FetchLongURL(r.Context(), shortUrl)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to fetch long URL")

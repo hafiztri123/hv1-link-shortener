@@ -5,13 +5,13 @@ import (
 	"net/http"
 )
 
-func Success(w http.ResponseWriter, message string,  status int, data ...any) {
+func Success(w http.ResponseWriter, message string, status int, data ...any) {
 	response := map[string]any{
-		"status": "success",
+		"status":  "success",
 		"message": message,
 	}
 
-	if(len(data) > 0 && data[0] != nil) {
+	if len(data) > 0 && data[0] != nil {
 		response["data"] = data[0]
 	}
 

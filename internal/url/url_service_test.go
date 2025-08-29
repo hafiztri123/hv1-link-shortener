@@ -21,4 +21,3 @@ func (m *MockRepository) UpdateShortCode(ctx context.Context, id int64, shortURL
 func (m *MockRepository) GetByID(ctx context.Context, id int64) (*URL, error) {
 	return m.GetByIDFunc(ctx, id)
 }
-

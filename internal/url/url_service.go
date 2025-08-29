@@ -7,7 +7,7 @@ import (
 )
 
 type Service struct {
-	repo URLRepository
+	repo     URLRepository
 	idOffset uint64
 }
 

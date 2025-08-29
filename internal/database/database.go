@@ -9,7 +9,6 @@ import (
 
 func Connect(connStr string) *sql.DB {
 
-
 	db, err := sql.Open("pgx", connStr)
 	if err != nil {
 		log.Fatalf("Unable to open database connection: %v\n", err)

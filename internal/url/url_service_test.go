@@ -89,16 +89,15 @@ func TestFetchLongURL(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "database fetch fails",
+			name:          "database fetch fails",
 			expectedInput: "g8",
 			setupMock: func(mock *MockRepository) {
-				mock.GetByIDFunc = func (ctx context.Context, id int64) (*URL, error)  {
+				mock.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
 					return nil, errors.New("database error")
 
 				}
 			},
 			expectedErr: errors.New("database error"),
-
 		},
 	}
 

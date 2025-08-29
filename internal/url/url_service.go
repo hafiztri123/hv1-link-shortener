@@ -18,7 +18,7 @@ func (s *Service) CreateShortCode(ctx context.Context, longURL string) error {
 	id, err := s.repo.Insert(ctx, longURL)
 
 	if err != nil {
-		log.Println("Failed to insert URL: %v", err)
+		log.Printf("Failed to insert URL: %v", err)
 		return err
 	}
 
@@ -38,7 +38,7 @@ func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (*string, 
 
 	url, err := s.repo.GetByID(ctx, int64(id))
 	if err != nil {
-		log.Println("Failed to fetch URL: %v", err)
+		log.Printf("Failed to fetch URL: %v", err)
 		return nil, err
 	}
 

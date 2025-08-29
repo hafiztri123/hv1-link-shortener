@@ -4,7 +4,7 @@ import "time"
 
 type URL struct {
 	ID        int64
-	ShortURL  string
+	ShortCode string
 	LongURL   string
 	CreatedAt time.Time
 }
@@ -14,5 +14,5 @@ type CreateURLRequest struct {
 }
 
 type CreateURLResponse struct {
-	ShortURL string `json:"short_url"`
+	ShortCode string `json:"short_url"`
 }

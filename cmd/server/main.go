@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"hafiztri123/app-link-shortener/internal/api"
+	"hafiztri123/app-link-shortener/internal/config"
 	"hafiztri123/app-link-shortener/internal/database"
 	"hafiztri123/app-link-shortener/internal/redis"
 	"hafiztri123/app-link-shortener/internal/url"
@@ -18,11 +19,13 @@ func main() {
 		log.Println("Note: .env file not found, using environment variable from OS")
 	}
 
-	db := database.Connect()
-	redis, err := redis.NewClient(context.Background())
+	cfg := config.Load()
+
+	db := database.Connect(cfg.DatabaseURL)
+	redis, err := redis.NewClient(context.Background(), cfg.RedisURL)
 
 	urlRepo := url.NewRepository(db)
-	urlService := url.NewService(urlRepo)
+	urlService := url.NewService(urlRepo, cfg.IDOffset)
 
 	if err != nil {
 		log.Fatalf("FATAL: Could not connect to Redis: %v", err)

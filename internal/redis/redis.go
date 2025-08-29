@@ -3,19 +3,14 @@ package redis
 import (
 	"context"
 	"log"
-	"os"
 
 	"github.com/go-redis/redis/v8"
 )
 
-func NewClient(ctx context.Context) (*redis.Client, error) {
-	rdbAddr, ok := os.LookupEnv("REDIS_URL")
-	if !ok {
-		log.Fatal("REDIS_URL Environment variable  not set")
-	}
+func NewClient(ctx context.Context, connStr string) (*redis.Client, error) {
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: rdbAddr,
+		Addr: connStr,
 	})
 
 	if err := rdb.Ping(ctx).Err(); err != nil {

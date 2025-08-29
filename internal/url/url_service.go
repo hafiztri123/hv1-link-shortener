@@ -2,7 +2,6 @@ package url
 
 import (
 	"context"
-	"fmt"
 	"log"
 )
 
@@ -15,7 +14,7 @@ func NewService(repo URLRepository, idOffset uint64) *Service {
 	return &Service{repo: repo, idOffset: idOffset}
 }
 
-func (s *Service) CreateShortURL(ctx context.Context, longURL string) error {
+func (s *Service) CreateShortCode(ctx context.Context, longURL string) error {
 	id, err := s.repo.Insert(ctx, longURL)
 
 	if err != nil {
@@ -23,10 +22,9 @@ func (s *Service) CreateShortURL(ctx context.Context, longURL string) error {
 		return err
 	}
 
-	shortUrl := toBase62(uint64(id) + s.idOffset)
-	fmt.Println("shortUrl: ", shortUrl)
+	shortcode := toBase62(uint64(id) + s.idOffset)
 
-	err = s.repo.UpdateShortCode(ctx, id, shortUrl)
+	err = s.repo.UpdateShortCode(ctx, id, shortcode)
 	if err != nil {
 		return err
 	}
@@ -34,9 +32,9 @@ func (s *Service) CreateShortURL(ctx context.Context, longURL string) error {
 	return nil
 }
 
-func (s *Service) FetchLongURL(ctx context.Context, shortURL string) (*string, error) {
+func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (*string, error) {
 
-	id := fromBase62(shortURL) - s.idOffset
+	id := fromBase62(shortCode) - s.idOffset
 
 	url, err := s.repo.GetByID(ctx, int64(id))
 	if err != nil {

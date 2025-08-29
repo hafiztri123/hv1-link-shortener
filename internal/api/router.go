@@ -28,7 +28,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Get("/health", s.healthCheckHandler)
 	r.Post("/api/v1/url/shorten", s.handleCreateURL)
-	r.Get("/api/v1/url/{shortUrl}", s.handleFetchURL)
+	r.Get("/api/v1/url/{shortCode}", s.handleFetchURL)
 
 	return r
 

@@ -7,7 +7,7 @@ import (
 
 type URLRepository interface {
 	Insert(ctx context.Context, longURL string) (int64, error)
-	UpdateShortCode(ctx context.Context, id int64, shortURL string) error
+	UpdateShortCode(ctx context.Context, id int64, shortCode string) error
 	GetByID(ctx context.Context, id int64) (*URL, error)
 }
 
@@ -26,9 +26,9 @@ func (r *Repository) Insert(ctx context.Context, longURL string) (int64, error) 
 	return id, err
 }
 
-func (r *Repository) UpdateShortCode(ctx context.Context, id int64, shortURL string) error {
+func (r *Repository) UpdateShortCode(ctx context.Context, id int64, shortCode string) error {
 	query := "UPDATE urls set short_url = $1 WHERE id = $2"
-	_, err := r.db.ExecContext(ctx, query, shortURL, id)
+	_, err := r.db.ExecContext(ctx, query, shortCode, id)
 	return err
 }
 
@@ -37,7 +37,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*URL, error) {
 
 	var url URL
 
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&url.ID, &url.ShortURL, &url.LongURL, &url.CreatedAt)
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&url.ID, &url.ShortCode, &url.LongURL, &url.CreatedAt)
 
 	if err != nil {
 		return nil, err

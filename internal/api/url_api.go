@@ -24,7 +24,7 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.urlService.CreateShortURL(r.Context(), req.LongURL)
+	err = s.urlService.CreateShortCode(r.Context(), req.LongURL)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to create short URL")
 		return
@@ -34,13 +34,13 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
-	shortUrl := chi.URLParam(r, "shortUrl")
-	if shortUrl == "" {
+	shortCode := chi.URLParam(r, "shortCode")
+	if shortCode == "" {
 		response.Error(w, http.StatusBadRequest, "short_url is a required field")
 		return
 	}
 
-	longURL, err := s.urlService.FetchLongURL(r.Context(), shortUrl)
+	longURL, err := s.urlService.FetchLongURL(r.Context(), shortCode)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to fetch long URL")
 		return

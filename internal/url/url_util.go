@@ -25,10 +25,10 @@ func toBase62(urlId uint64) string {
 	return reverse(sb.String())
 }
 
-func fromBase62(shortUrl string) uint64 {
+func fromBase62(shortCode string) uint64 {
 	var n uint64
-	for i, char := range shortUrl {
-		power := len(shortUrl) - (i + 1)
+	for i, char := range shortCode {
+		power := len(shortCode) - (i + 1)
 		pos := strings.IndexRune(base62Chars, char)
 		n += uint64(pos) * uint64(math.Pow(float64(base), float64(power)))
 	}

@@ -2,6 +2,7 @@ package url
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
@@ -83,7 +84,7 @@ func TestFetchLongURL(t *testing.T) {
 			expectedInput: "g8",
 			setupMock: func(mock *MockRepository) {
 				mock.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
-					return &URL{ID: 1000, ShortCode: "g8", CreatedAt: time.Now(), LongURL: "https://example.com/success"}, nil
+					return &URL{ID: 1000, ShortCode: sql.NullString{String: "g8", Valid: true}, CreatedAt: time.Now(), LongURL: "https://example.com/success"}, nil
 				}
 			},
 			expectedErr: nil,

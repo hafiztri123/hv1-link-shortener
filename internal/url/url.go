@@ -1,10 +1,13 @@
 package url
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type URL struct {
 	ID        int64
-	ShortCode string
+	ShortCode sql.NullString
 	LongURL   string
 	CreatedAt time.Time
 }

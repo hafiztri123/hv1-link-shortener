@@ -32,6 +32,10 @@ migrate-down:
 migrate-force:
 	@migrate -database "$(DATABASE_URL)" -path migrations force $(v)
 
+test-setup:
+	@migrate -database "$(DATABASE_URL_TEST)" -path migrations down -all
+	@migrate -database "$(DATABASE_URL_TEST)" -path migrations up
+
 test-coverage:
 	@go test -v -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out

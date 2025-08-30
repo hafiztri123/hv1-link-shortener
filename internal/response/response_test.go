@@ -31,6 +31,7 @@ func TestSuccess(t *testing.T) {
 	if status, _ := responseBody["status"].(string); status != "success" {
 		t.Errorf("expected status 'success', got: %v", status)
 	}
+
 }
 
 func TestError(t *testing.T) {

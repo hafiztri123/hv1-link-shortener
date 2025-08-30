@@ -15,12 +15,12 @@ var testRepo *url.Repository
 func TestMain(m *testing.M) {
 	err := godotenv.Load("../../.env")
 	if err != nil {
-		log.Fatalf("FAIL: unable to load environment variable: %v", err)
+		log.Printf("WARN: unable to load environment variable: %v", err)
 	}
 
 	dbURL, ok := os.LookupEnv("DATABASE_URL_TEST")
 	if !ok {
-		log.Fatal("FAIL: unable to get 'DATABASE_URL_TEST' environment variable")
+		log.Println("WARN: unable to get 'DATABASE_URL_TEST' environment variable")
 	}
 
 	db := Connect(dbURL)

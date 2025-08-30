@@ -31,4 +31,17 @@ jobs:
         run : go build -v ./...
 
       - name: test
+        env : 
+          DATABASE_URL: ${{secrets.DATABASE_URL}}
+          DATABASE_URL_TEST: ${{secrets.DATABASE_URL_TEST}}
+          REDIS_URL: ${{secrets.REDIS_URL}}
+          
+          ID_OFFSET: ${{secrets.ID_OFFSET}}
+
+          POSTGRES_USER: ${{secrets.POSTGRES_USER}}
+          POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
+          POSTGRES_DB: ${{secrets.POSTGRES_DB}}
+
+          
+
         run : go test -v ./...

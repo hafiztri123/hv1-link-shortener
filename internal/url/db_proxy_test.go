@@ -9,7 +9,6 @@ import (
 	"github.com/mattn/go-sqlite3"
 )
 
-
 var queryRexp = regexp.MustCompile(`\$[0-9]+`)
 
 type proxyDriver struct {
@@ -33,8 +32,10 @@ func (c *proxyConn) Prepare(query string) (driver.Stmt, error) {
 	return c.primaryConn.(driver.ConnPrepareContext).PrepareContext(context.Background(), sqliteQuery)
 }
 
-func (c *proxyConn) Close() error { return c.primaryConn.Close()}
-func (c *proxyConn) Begin() (driver.Tx, error) { return c.BeginTx(context.Background(), driver.TxOptions{})}
+func (c *proxyConn) Close() error { return c.primaryConn.Close() }
+func (c *proxyConn) Begin() (driver.Tx, error) {
+	return c.BeginTx(context.Background(), driver.TxOptions{})
+}
 
 func (c *proxyConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
 	if connBeginTx, ok := c.primaryConn.(driver.ConnBeginTx); ok {

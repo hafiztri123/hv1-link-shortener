@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-
-
 func setupTestDB(t *testing.T) *sql.DB {
 	db, err := sql.Open("sqlite3_proxy", ":memory:")
 	require.NoError(t, err)

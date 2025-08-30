@@ -27,13 +27,13 @@ func (r *Repository) Insert(ctx context.Context, longURL string) (int64, error) 
 }
 
 func (r *Repository) UpdateShortCode(ctx context.Context, id int64, shortCode string) error {
-	query := "UPDATE urls set short_url = $1 WHERE id = $2"
+	query := "UPDATE urls set short_code = $1 WHERE id = $2"
 	_, err := r.DB.ExecContext(ctx, query, shortCode, id)
 	return err
 }
 
 func (r *Repository) GetByID(ctx context.Context, id int64) (*URL, error) {
-	query := "SELECT id, short_url, long_url, created_at FROM urls where id = $1"
+	query := "SELECT id, short_code, long_url, created_at FROM urls where id = $1"
 
 	var url URL
 

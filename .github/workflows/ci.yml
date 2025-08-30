@@ -50,7 +50,11 @@ jobs:
           POSTGRES_USER: ${{secrets.POSTGRES_USER}}
           POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
           POSTGRES_DB: ${{secrets.POSTGRES_DB}}
-        run : go test -v ./...
+        run : |
+          migrate -database "${{secrets.DATABASE_URL_TEST}}" -path migrations down -all
+          migrate -database "${{secrets.DATABASE_URL_TEST}}" -path migrations up 
+          go test -v ./...
+
 
       - name: Stop services
         if: always()

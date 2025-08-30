@@ -42,6 +42,11 @@ jobs:
       - name: Install migrate
         run : go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest 
 
+      - name: Setup test database
+        run : |
+          migrate -database "${{secrets.DATABASE_URL_TEST}}" -path migrations down -all
+          migrate -database "${{secrets.DATABASE_URL_TEST}}" -path migrations up 
+
 
       - name: test
         env : 
@@ -55,8 +60,7 @@ jobs:
           POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASSWORD}}
           POSTGRES_DB: ${{secrets.POSTGRES_DB}}
         run : |
-          migrate -database "${{secrets.DATABASE_URL_TEST}}" -path migrations down -all
-          migrate -database "${{secrets.DATABASE_URL_TEST}}" -path migrations up 
+
           go test -v ./...
 
 

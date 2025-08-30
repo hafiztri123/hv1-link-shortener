@@ -10,7 +10,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-
 var redisClient *redis.Client
 
 func TestMain(m *testing.M) {
@@ -24,13 +23,12 @@ func TestMain(m *testing.M) {
 		redisURL = "localhost:6379/1" // DB 1 will be used as test database
 	}
 
-
 	redisClient, err = NewClient(context.Background(), redisURL)
 
 	if err != nil {
 		log.Fatalf("FATAL: unable to connect to Redis: %v", err)
 	}
-	
+
 	if err := redisClient.Ping(context.Background()).Err(); err != nil {
 		log.Fatalf("FATAL: unable to ping Redis: %v", err)
 	}
@@ -42,7 +40,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupTest(t *testing.T) func() {
-	teardown := func () {
+	teardown := func() {
 		err := redisClient.FlushDB(context.Background()).Err()
 		if err != nil {
 			t.Fatalf("FATAL: unable to flush Redis database: %v", err)
@@ -76,7 +74,6 @@ func TestSetAndGet(t *testing.T) {
 func TestGetNonExistentKey(t *testing.T) {
 	teardown := setupTest(t)
 	defer teardown()
-
 
 	_, err := redisClient.Get(context.Background(), "nonExistentKey").Result()
 	if err != redis.Nil {

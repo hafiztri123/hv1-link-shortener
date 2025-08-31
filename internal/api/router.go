@@ -19,6 +19,8 @@ func NewServer(db DB, redis Redis, urlService URLService) *Server {
 func (s *Server) RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 
+	r.Use(RateLimiter(10, 20))
+
 	r.Route("/api/v1", func(v1 chi.Router) {
 		v1.Get("/health", s.healthCheckHandler)
 		v1.Post("/url/shorten", s.handleCreateURL)

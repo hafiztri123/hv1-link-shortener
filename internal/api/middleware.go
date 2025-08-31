@@ -19,4 +19,4 @@ func RateLimiter(r rate.Limit, b int) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-} 
+}

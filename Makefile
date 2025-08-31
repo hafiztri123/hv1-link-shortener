@@ -45,4 +45,12 @@ test-html:
 	@go test -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out
 
+branch-review:
+	@git branch --merged main | grep -v -E '^\*|main|master$$'
+
+branch-prune:
+	@git branch --merged main | grep -v -E '^\*|main|master$$' | xargs git branch -d
+
+
+
 .DEFAULT_GOAL := help

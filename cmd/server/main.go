@@ -8,7 +8,9 @@ import (
 	"hafiztri123/app-link-shortener/internal/redis"
 	"hafiztri123/app-link-shortener/internal/url"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -18,6 +20,11 @@ func main() {
 	if err != nil {
 		log.Println("Note: .env file not found, using environment variable from OS")
 	}
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+
 
 	cfg, err := config.Load()
 

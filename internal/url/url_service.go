@@ -2,7 +2,7 @@ package url
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -22,7 +22,7 @@ func (s *Service) CreateShortCode(ctx context.Context, longURL string) error {
 	id, err := s.repo.Insert(ctx, longURL)
 
 	if err != nil {
-		log.Printf("Failed to insert URL: %v", err)
+		slog.Error("Failed to insert URL", "error", err, "url", longURL)
 		return err
 	}
 
@@ -47,13 +47,13 @@ func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, e
 
 	url, err := s.repo.GetByID(ctx, int64(id))
 	if err != nil {
-		log.Printf("Failed to fetch URL: %v", err)
+		slog.Error("Failed to fetch URL", "error", err, "id", id, "shortCode", shortCode)
 		return "", err
 	}
 
 	err = s.redis.Set(ctx, "url:"+shortCode, url.LongURL, 1*time.Hour).Err()
 	if err != nil {
-		log.Printf("Failed to cache URL: %v", err)
+		slog.Warn("Failed to cache URL", "error", err, "key", "url:"+shortCode, "value", url.LongURL)
 	}
 
 	return url.LongURL, nil

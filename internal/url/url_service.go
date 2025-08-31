@@ -9,8 +9,8 @@ import (
 )
 
 type Service struct {
-	repo  URLRepository
-	redis *redis.Client
+	repo     URLRepository
+	redis    *redis.Client
 	idOffset uint64
 }
 

@@ -19,7 +19,11 @@ func main() {
 		log.Println("Note: .env file not found, using environment variable from OS")
 	}
 
-	cfg := config.Load()
+	cfg, err := config.Load()
+
+	if err != nil {
+		log.Fatalf("FATAL: Could not load config: %v", err)
+	}
 
 	db := database.Connect(cfg.DatabaseURL)
 	redis, err := redis.NewClient(context.Background(), cfg.RedisURL)

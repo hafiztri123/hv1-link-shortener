@@ -60,14 +60,10 @@ func TestLoggingMiddleware(t *testing.T) {
 
 	loggedHandler.ServeHTTP(rr, req)
 	logOutput := logBuffer.String()
-	assert.Contains(t, logOutput, `"level":"INFO` )
+	assert.Contains(t, logOutput, `"level":"INFO`)
 	assert.Contains(t, logOutput, `"msg":"http request"`)
 	assert.Contains(t, logOutput, `"method":"GET"`)
 	assert.Contains(t, logOutput, `"path":"/test/path"`)
 	assert.Contains(t, logOutput, `"duration"`)
-
-
-
-
 
 }

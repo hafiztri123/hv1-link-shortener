@@ -29,7 +29,7 @@ func main() {
 	redis, err := redis.NewClient(context.Background(), cfg.RedisURL)
 
 	urlRepo := url.NewRepository(db)
-	urlService := url.NewService(urlRepo, cfg.IDOffset)
+	urlService := url.NewService(urlRepo, redis, cfg.IDOffset)
 
 	if err != nil {
 		log.Fatalf("FATAL: Could not connect to Redis: %v", err)

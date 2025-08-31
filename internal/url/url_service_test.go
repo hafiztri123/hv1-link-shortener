@@ -6,6 +6,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/go-redis/redismock/v8"
 )
 
 type MockRepository struct {
@@ -65,7 +67,7 @@ func TestCreateShortCode(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			MockRepository := &MockRepository{}
 			tc.setupMock(MockRepository)
-			Service := NewService(MockRepository, 1000)
+			Service := NewService(MockRepository, nil, 1000)
 
 			err := Service.CreateShortCode(context.Background(), tc.expectedInput)
 
@@ -104,9 +106,10 @@ func TestFetchLongURL(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			db, _ := redismock.NewClientMock()
 			mockRepository := &MockRepository{}
 			tc.setupMock(mockRepository)
-			service := NewService(mockRepository, 1000)
+			service := NewService(mockRepository, db, 1000)
 
 			_, err := service.FetchLongURL(context.Background(), tc.expectedInput)
 

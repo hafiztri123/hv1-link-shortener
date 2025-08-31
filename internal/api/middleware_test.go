@@ -1,6 +1,8 @@
 package api
 
 import (
+	"bytes"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -39,4 +41,29 @@ func TestRateLimiter(t *testing.T) {
 	req4, _ := http.NewRequest(http.MethodGet, "/", nil)
 	rateLimiterHandler.ServeHTTP(rr4, req4)
 	assert.Equal(t, http.StatusOK, rr4.Code)
+}
+
+func TestLoggingMiddleware(t *testing.T) {
+	var logBuffer bytes.Buffer
+
+	logger := slog.New(slog.NewJSONHandler(&logBuffer, nil))
+	slog.SetDefault(logger)
+
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	loggedHandler := LoggingMiddleware(testHandler)
+
+	req, _ := http.NewRequest(http.MethodGet, "/test/path", nil)
+	rr := httptest.NewRecorder()
+
+	loggedHandler.ServeHTTP(rr, req)
+	logOutput := logBuffer.String()
+	assert.Contains(t, logOutput, `"level":"INFO`)
+	assert.Contains(t, logOutput, `"msg":"http request"`)
+	assert.Contains(t, logOutput, `"method":"GET"`)
+	assert.Contains(t, logOutput, `"path":"/test/path"`)
+	assert.Contains(t, logOutput, `"duration"`)
+
 }

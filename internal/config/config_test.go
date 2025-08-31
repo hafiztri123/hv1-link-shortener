@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
-
 func TestLoad(t *testing.T) {
 	t.Run("success case - valid config", func(t *testing.T) {
 		t.Setenv("DATABASE_URL", "test_db_url")
@@ -27,7 +25,6 @@ func TestLoad(t *testing.T) {
 		t.Setenv("REDIS_URL", "test_redis_url")
 		t.Setenv("ID_OFFSET", "123")
 		os.Unsetenv("DATABASE_URL")
-
 
 		_, err := Load()
 

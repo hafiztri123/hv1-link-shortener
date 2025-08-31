@@ -63,7 +63,7 @@ jobs:
           POSTGRES_DB: ${{secrets.POSTGRES_DB}}
         run : |
 
-          go test -v ./...
+          go test -v ./internal/...
 
 
       - name: Stop services

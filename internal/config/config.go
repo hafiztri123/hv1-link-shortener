@@ -36,7 +36,7 @@ func Load() (*Config, error) {
 		errors = append(errors, fmt.Sprintf("Failed to parse ID_OFFSET: %v", err))
 	}
 
-	if (len(errors) > 0 ) {
+	if len(errors) > 0 {
 		errorString := strings.Join(errors, "\n")
 		return nil, fmt.Errorf("FATAL: %s", errorString)
 	}

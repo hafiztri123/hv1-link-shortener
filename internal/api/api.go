@@ -41,7 +41,6 @@ func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "DB and Redis is connected")
 }
 
-
 func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 
 	var req url.CreateURLRequest

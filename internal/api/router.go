@@ -28,8 +28,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 		v1.Get("/url/{shortCode}", s.handleFetchURL)
 	})
 
-
 	return r
 
 }
-

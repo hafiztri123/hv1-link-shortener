@@ -20,7 +20,7 @@ type mockDB struct {
 type mockURLService struct {
 	createError error
 	FetchResult string
-	FetchError error
+	FetchError  error
 }
 
 type mockRedis struct {
@@ -37,14 +37,12 @@ func (m *mockRedis) Ping(ctx context.Context) *redis.StatusCmd {
 
 }
 
-
 func (m *mockDB) Ping() error {
 	if m.ShouldFail {
 		return errors.New("FAIL: unable to ping mock database")
 	}
 	return nil
 }
-
 
 func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) error {
 	return m.createError
@@ -55,7 +53,6 @@ func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (st
 }
 
 func TestHandleCreateURL_Success(t *testing.T) {
-
 
 	server := &Server{
 		urlService: &mockURLService{
@@ -106,8 +103,7 @@ func TestFetchURL_Success(t *testing.T) {
 	server := &Server{
 		urlService: &mockURLService{
 			FetchResult: "https://example.com",
-			FetchError: nil,
-
+			FetchError:  nil,
 		},
 	}
 
@@ -129,7 +125,7 @@ func TestFetchURL_Failure(t *testing.T) {
 	server := &Server{
 		urlService: &mockURLService{
 			FetchResult: "",
-			FetchError: errors.New("Failed to fetch long URL"),
+			FetchError:  errors.New("Failed to fetch long URL"),
 		},
 	}
 
@@ -184,10 +180,6 @@ func TestHealthCheck(t *testing.T) {
 			assert.Equal(t, tc.expectedStatusCode, rr.Code)
 			assert.Contains(t, rr.Body.String(), tc.expectedBody)
 		})
-	} 
-
+	}
 
 }
-
-
-

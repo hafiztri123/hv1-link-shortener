@@ -10,8 +10,6 @@ type Service struct {
 	idOffset uint64
 }
 
-
-
 func NewService(repo URLRepository, idOffset uint64) *Service {
 	return &Service{repo: repo, idOffset: idOffset}
 }

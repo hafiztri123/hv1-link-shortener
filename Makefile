@@ -37,7 +37,7 @@ test-setup:
 	@migrate -database "$(DATABASE_URL_TEST)" -path migrations up
 
 test-coverage:
-	@go test -v -coverprofile=coverage.out ./...
+	@go test -coverprofile=coverage.out ./...
 	@go tool cover -func=coverage.out
 
 

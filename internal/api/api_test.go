@@ -117,7 +117,7 @@ func TestFetchURL_Success(t *testing.T) {
 
 	server.handleFetchURL(rr, req)
 
-	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, http.StatusMovedPermanently, rr.Code)
 	assert.Contains(t, rr.Body.String(), "https://example.com")
 }
 

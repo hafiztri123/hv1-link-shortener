@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hafiztri123/app-link-shortener/internal/response"
 	"hafiztri123/app-link-shortener/internal/url"
@@ -74,9 +76,14 @@ func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
 
 	longURL, err := s.urlService.FetchLongURL(r.Context(), shortCode)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			response.Error(w, http.StatusNotFound, "Short URL not found")
+			return
+		}
 		response.Error(w, http.StatusInternalServerError, "Failed to fetch long URL")
 		return
 	}
 
-	response.Success(w, "Success!, Long URL fetched", http.StatusOK, longURL)
+	http.Redirect(w, r, longURL, http.StatusMovedPermanently)
+
 }

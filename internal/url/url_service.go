@@ -10,6 +10,8 @@ type Service struct {
 	idOffset uint64
 }
 
+
+
 func NewService(repo URLRepository, idOffset uint64) *Service {
 	return &Service{repo: repo, idOffset: idOffset}
 }
@@ -32,15 +34,15 @@ func (s *Service) CreateShortCode(ctx context.Context, longURL string) error {
 	return nil
 }
 
-func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (*string, error) {
+func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
 
 	id := fromBase62(shortCode) - s.idOffset
 
 	url, err := s.repo.GetByID(ctx, int64(id))
 	if err != nil {
 		log.Printf("Failed to fetch URL: %v", err)
-		return nil, err
+		return "", err
 	}
 
-	return &url.LongURL, nil
+	return url.LongURL, nil
 }

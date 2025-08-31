@@ -3,15 +3,19 @@ package url
 import (
 	"context"
 	"log"
+	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 type Service struct {
-	repo     URLRepository
+	repo  URLRepository
+	redis *redis.Client
 	idOffset uint64
 }
 
-func NewService(repo URLRepository, idOffset uint64) *Service {
-	return &Service{repo: repo, idOffset: idOffset}
+func NewService(repo URLRepository, redis *redis.Client, idOffset uint64) *Service {
+	return &Service{repo: repo, redis: redis, idOffset: idOffset}
 }
 
 func (s *Service) CreateShortCode(ctx context.Context, longURL string) error {
@@ -34,12 +38,22 @@ func (s *Service) CreateShortCode(ctx context.Context, longURL string) error {
 
 func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
 
+	cachedUrl, err := s.redis.Get(ctx, "url:"+shortCode).Result()
+	if err == nil {
+		return cachedUrl, nil
+	}
+
 	id := fromBase62(shortCode) - s.idOffset
 
 	url, err := s.repo.GetByID(ctx, int64(id))
 	if err != nil {
 		log.Printf("Failed to fetch URL: %v", err)
 		return "", err
+	}
+
+	err = s.redis.Set(ctx, "url:"+shortCode, url.LongURL, 1*time.Hour).Err()
+	if err != nil {
+		log.Printf("Failed to cache URL: %v", err)
 	}
 
 	return url.LongURL, nil

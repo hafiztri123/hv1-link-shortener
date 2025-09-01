@@ -38,9 +38,9 @@ func TestURLValidation(t *testing.T) {
 			want:  false,
 		},
 		{
-			name: "invalid domain",
-			input : "https://this-hostname-definitely-does-not-exist.invalid",
-			want: false,
+			name:  "invalid domain",
+			input: "https://this-hostname-definitely-does-not-exist.invalid",
+			want:  false,
 		},
 	}
 

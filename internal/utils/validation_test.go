@@ -32,6 +32,16 @@ func TestURLValidation(t *testing.T) {
 			input: "https://",
 			want:  false,
 		},
+		{
+			name:  "loopback address",
+			input: "http://127.0.0.1",
+			want:  false,
+		},
+		{
+			name:  "invalid domain",
+			input: "https://this-hostname-definitely-does-not-exist.invalid",
+			want:  false,
+		},
 	}
 
 	for _, tc := range testCases {

@@ -113,7 +113,7 @@ func TestFetchLongURL(t *testing.T) {
 		},
 
 		{
-			name: "cache miss, lock not acquired, timeout",
+			name:      "cache miss, lock not acquired, timeout",
 			shortCode: "g8",
 			setupMock: func(repoMock *MockRepository, redisMock redismock.ClientMock) {
 				redisMock.ExpectGet("url:g8").SetErr(redis.Nil)
@@ -122,7 +122,7 @@ func TestFetchLongURL(t *testing.T) {
 				redisMock.ExpectGet("url:g8").SetErr(redis.Nil)
 
 				repoMock.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
-					return &URL{LongURL: "https://db-fallback.com" }, nil
+					return &URL{LongURL: "https://db-fallback.com"}, nil
 				}
 			},
 			expectedURL: "https://db-fallback.com",

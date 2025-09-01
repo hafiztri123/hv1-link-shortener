@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hafiztri123/app-link-shortener/internal/response"
 	"hafiztri123/app-link-shortener/internal/url"
+	"hafiztri123/app-link-shortener/internal/utils"
 	"log"
 	"net/http"
 	"time"
@@ -50,6 +51,12 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	ok := utils.IsValidURL(req.LongURL)
+	if !ok {
+		response.Error(w, http.StatusBadRequest, "Invalid URL")
 		return
 	}
 

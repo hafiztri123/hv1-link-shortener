@@ -54,14 +54,14 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ok := utils.IsValidURL(req.LongURL)
-	if !ok {
-		response.Error(w, http.StatusBadRequest, "Invalid URL")
+	if req.LongURL == "" {
+		response.Error(w, http.StatusBadRequest, "long_url is a required field")
 		return
 	}
 
-	if req.LongURL == "" {
-		response.Error(w, http.StatusBadRequest, "long_url is a required field")
+	ok := utils.IsValidURL(req.LongURL)
+	if !ok {
+		response.Error(w, http.StatusBadRequest, "Invalid URL")
 		return
 	}
 

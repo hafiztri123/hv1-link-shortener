@@ -1,6 +1,9 @@
 package utils
 
-import "net/url"
+import (
+	"net"
+	"net/url"
+)
 
 func IsValidURL(s string) bool {
 	u, err := url.ParseRequestURI(s)
@@ -14,6 +17,22 @@ func IsValidURL(s string) bool {
 
 	if u.Host == "" {
 		return false
+	}
+
+	hostName, _, err := net.SplitHostPort(u.Host)
+	if err != nil {
+		hostName = u.Host
+	}
+
+	ips, err := net.LookupIP(hostName)
+	if err != nil {
+		return false
+	}
+
+	for _, ip := range ips {
+		if ip.IsPrivate() || ip.IsLoopback() {
+			return false
+		}
 	}
 
 	return true

@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -52,90 +53,143 @@ func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (st
 	return m.FetchResult, m.FetchError
 }
 
-func TestHandleCreateURL_Success(t *testing.T) {
+func TestHandleCreateURL(t *testing.T) {
+	testCases := []struct{
+		name string
+		input string
+		err error
+		wantStatus int
+		wantMsg string
+	}{
+		{
+			name: "success",
+			input: `{"long_url": "https://example.com"}`,
+			err: nil,
+			wantStatus: http.StatusCreated,
+			wantMsg: "Success!, Short URL created",
+			
+		},
+		{
+			name: "invalid request payload",
+			input: `{"failed,"}`,
+			err: nil,
+			wantStatus: http.StatusBadRequest,
+			wantMsg: "Invalid request payload",
 
-	server := &Server{
-		urlService: &mockURLService{
-			createError: nil,
+		},
+		{
+			name: "invalid url",
+			input: `{"long_url": "example.com"}`,
+			err: nil,
+			wantStatus: http.StatusBadRequest,
+			wantMsg: "Invalid URL",
+		},
+		{
+			name: "missing long url",
+			input: `{"long_url": ""}`,
+			err: nil,
+			wantStatus: http.StatusBadRequest,
+			wantMsg: "long_url is a required field",
+		},
+		{
+			name: "failed to create short url",
+			input: `{"long_url": "https://example.com"}`,
+			err: errors.New("Failed to create short URL"),
+			wantStatus: http.StatusInternalServerError,
+			wantMsg: "Failed to create short URL",
 		},
 	}
 
-	requestBody := []byte(`{"long_url": "https://example.com"}`)
-	req, _ := http.NewRequest("POST", "/api/v1/url/shorten", bytes.NewBuffer(requestBody))
-	rr := httptest.NewRecorder()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &Server{
+				urlService: &mockURLService{
+					createError: tc.err,
+				},
+			} 
 
-	server.handleCreateURL(rr, req)
+			requestBody := []byte(tc.input)
+			req, _ := http.NewRequest(http.MethodPost, "/api/v1/url/shorten", bytes.NewBuffer(requestBody))
+			rr := httptest.NewRecorder()
 
-	assert.Equal(t, http.StatusCreated, rr.Code)
-	assert.Contains(t, rr.Body.String(), "Success!, Short URL created")
+			server.handleCreateURL(rr, req)
+
+			assert.Equal(t, rr.Code, tc.wantStatus)
+			assert.Contains(t, rr.Body.String(), tc.wantMsg)
+		})
+	}
 }
 
-func TestHandleCreateURL_ServiceFailure(t *testing.T) {
-	server := &Server{
-		urlService: &mockURLService{
-			createError: errors.New("Failed to create short URL"),
+func TestFetchLongURL(t *testing.T) {
+	testCases := []struct{
+		name string
+		input string
+		wantResult string
+		wantStatus int
+		fetchResult string
+		fetchError error
+	}{
+		{
+			name: "Success",
+			input: "success",
+			wantResult: "https://example.com",
+			wantStatus: http.StatusMovedPermanently,
+			fetchResult: "https://example.com",
+			fetchError: nil,
+		},
+		{
+			name: "query params short code missing",
+			input: "",
+			wantResult: "",
+			wantStatus: http.StatusBadRequest,
+			fetchResult: "",
+			fetchError: nil,
+		},
+		{
+			name: "service returning error (non database error)",
+			input: "https://example.com",
+			wantResult: "",
+			wantStatus: http.StatusInternalServerError,
+			fetchResult: "",
+			fetchError: errors.New("Error"),
+		},
+		{
+			name: "service returning error (database error)",
+			input: "https://example.com",
+			wantResult: "",
+			wantStatus: http.StatusNotFound,
+			fetchError: sql.ErrNoRows,
 		},
 	}
 
-	requestBody := []byte(`{"long_url": "https://example.com"}`)
-	req, _ := http.NewRequest("POST", "/api/v1/url/shorten", bytes.NewBuffer(requestBody))
-	rr := httptest.NewRecorder()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &Server{
+				urlService: &mockURLService{
+					FetchResult: tc.fetchResult,
+					FetchError: tc.fetchError,
+				},
+			}
 
-	server.handleCreateURL(rr, req)
+			reqCtx := chi.NewRouteContext()
+			reqCtx.URLParams.Add("shortCode", tc.input)
 
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-}
+			req, _ := http.NewRequest(http.MethodGet, "/api/v1/url", nil)
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, reqCtx))
 
-func TestHandleCreateURL_InvalidJSON(t *testing.T) {
+			rr := httptest.NewRecorder()
 
-	server := &Server{}
+			server.handleFetchURL(rr, req)
 
-	requestBody := []byte(`{"long_url": "https://example.com`)
-	req, _ := http.NewRequest("POST", "/api/v1/url/shorten", bytes.NewBuffer(requestBody))
-	rr := httptest.NewRecorder()
+			assert.Equal(t, rr.Code, tc.wantStatus)
+			if(tc.wantResult != "") {
+				assert.Contains(t, rr.Body.String(), tc.wantResult)
 
-	server.handleCreateURL(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-}
-
-func TestFetchURL_Success(t *testing.T) {
-	server := &Server{
-		urlService: &mockURLService{
-			FetchResult: "https://example.com",
-			FetchError:  nil,
-		},
+			}
+		})
 	}
-
-	reqCtx := chi.NewRouteContext()
-	reqCtx.URLParams.Add("shortCode", "example")
-
-	req, _ := http.NewRequest(http.MethodGet, "/api/v1/url/example", nil)
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, reqCtx))
-
-	rr := httptest.NewRecorder()
-
-	server.handleFetchURL(rr, req)
-
-	assert.Equal(t, http.StatusMovedPermanently, rr.Code)
-	assert.Contains(t, rr.Body.String(), "https://example.com")
 }
 
-func TestFetchURL_Failure(t *testing.T) {
-	server := &Server{
-		urlService: &mockURLService{
-			FetchResult: "",
-			FetchError:  errors.New("Failed to fetch long URL"),
-		},
-	}
-
-	req, _ := http.NewRequest(http.MethodGet, "/api/v1/url/example", nil)
-	rr := httptest.NewRecorder()
-
-	server.handleFetchURL(rr, req)
-
-	assert.Equal(t, http.StatusBadRequest, rr.Code)
-}
 
 func TestHealthCheck(t *testing.T) {
 	testcases := []struct {

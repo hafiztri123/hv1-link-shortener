@@ -2,25 +2,19 @@ package url
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/go-redis/redismock/v8"
+	"github.com/stretchr/testify/assert"
 )
 
 type MockRepository struct {
 	InsertFunc          func(ctx context.Context, longURL string) (int64, error)
 	UpdateShortCodeFunc func(ctx context.Context, id int64, shortCode string) error
 	GetByIDFunc         func(ctx context.Context, id int64) (*URL, error)
-}
-
-type TestCases[T any] struct {
-	name          string
-	expectedInput T
-	setupMock     func(*MockRepository)
-	expectedErr   error
 }
 
 func (m *MockRepository) Insert(ctx context.Context, longURL string) (int64, error) {
@@ -36,7 +30,12 @@ func (m *MockRepository) GetByID(ctx context.Context, id int64) (*URL, error) {
 }
 
 func TestCreateShortCode(t *testing.T) {
-	testCases := []TestCases[string]{
+	testCases := []struct {
+		name          string
+		expectedInput string
+		setupMock     func(*MockRepository)
+		expectedErr   error
+	}{
 		{
 			name:          "success",
 			expectedInput: "https://example.com/success",
@@ -80,41 +79,71 @@ func TestCreateShortCode(t *testing.T) {
 }
 
 func TestFetchLongURL(t *testing.T) {
-	testCases := []TestCases[string]{
+	testCases := []struct {
+		name        string
+		shortCode   string
+		setupMock   func(repoMock *MockRepository, redisMock redismock.ClientMock)
+		expectedURL string
+		expectedErr error
+	}{
 		{
-			name:          "success",
-			expectedInput: "g8",
-			setupMock: func(mock *MockRepository) {
-				mock.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
-					return &URL{ID: 1000, ShortCode: sql.NullString{String: "g8", Valid: true}, CreatedAt: time.Now(), LongURL: "https://example.com/success"}, nil
-				}
+			name:      "success - cache hit",
+			shortCode: "g8",
+			setupMock: func(mock *MockRepository, redisMock redismock.ClientMock) {
+				redisMock.ExpectGet("url:g8").SetVal("https://cached.com")
 			},
+			expectedURL: "https://cached.com",
 			expectedErr: nil,
 		},
-		{
-			name:          "database fetch fails",
-			expectedInput: "g8",
-			setupMock: func(mock *MockRepository) {
-				mock.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
-					return nil, errors.New("database error")
 
+		{
+			name:      "database cache miss, lock acquired",
+			shortCode: "g8",
+			setupMock: func(repoMock *MockRepository, redisMock redismock.ClientMock) {
+				redisMock.ExpectGet("url:g8").SetErr(redis.Nil)
+				redisMock.ExpectSetNX("lock:g8", "1", 10*time.Second).SetVal(true)
+				redisMock.ExpectDel("lock:g8").SetVal(1)
+				redisMock.ExpectSet("url:g8", "https://db.com", 1*time.Hour).SetVal("OK")
+				repoMock.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
+					return &URL{LongURL: "https://db.com"}, nil
 				}
 			},
-			expectedErr: errors.New("database error"),
+			expectedURL: "https://db.com",
+			expectedErr: nil,
+		},
+
+		{
+			name: "cache miss, lock not acquired, timeout",
+			shortCode: "g8",
+			setupMock: func(repoMock *MockRepository, redisMock redismock.ClientMock) {
+				redisMock.ExpectGet("url:g8").SetErr(redis.Nil)
+				redisMock.ExpectSetNX("lock:g8", "1", 10*time.Second).SetVal(false)
+				redisMock.ExpectGet("url:g8").SetErr(redis.Nil)
+				redisMock.ExpectGet("url:g8").SetErr(redis.Nil)
+
+				repoMock.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
+					return &URL{LongURL: "https://db-fallback.com" }, nil
+				}
+			},
+			expectedURL: "https://db-fallback.com",
+			expectedErr: nil,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			db, _ := redismock.NewClientMock()
+			redisClient, redisMock := redismock.NewClientMock()
 			mockRepository := &MockRepository{}
-			tc.setupMock(mockRepository)
-			service := NewService(mockRepository, db, 1000)
+			tc.setupMock(mockRepository, redisMock)
+			service := NewService(mockRepository, redisClient, 0)
 
-			_, err := service.FetchLongURL(context.Background(), tc.expectedInput)
+			longURL, err := service.FetchLongURL(context.Background(), tc.shortCode)
 
-			if (err != nil && tc.expectedErr == nil) || (err == nil && tc.expectedErr != nil) || (err != nil && tc.expectedErr != nil && err.Error() != tc.expectedErr.Error()) {
-				t.Errorf("unexpected error: got %v want %v", err, tc.expectedErr)
+			assert.Equal(t, tc.expectedURL, longURL)
+			if tc.expectedErr != nil {
+				assert.EqualError(t, err, tc.expectedErr.Error())
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

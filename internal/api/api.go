@@ -65,8 +65,6 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-
 	err = s.urlService.CreateShortCode(r.Context(), req.LongURL)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to create short URL")

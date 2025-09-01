@@ -54,49 +54,47 @@ func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (st
 }
 
 func TestHandleCreateURL(t *testing.T) {
-	testCases := []struct{
-		name string
-		input string
-		err error
+	testCases := []struct {
+		name       string
+		input      string
+		err        error
 		wantStatus int
-		wantMsg string
+		wantMsg    string
 	}{
 		{
-			name: "success",
-			input: `{"long_url": "https://example.com"}`,
-			err: nil,
+			name:       "success",
+			input:      `{"long_url": "https://example.com"}`,
+			err:        nil,
 			wantStatus: http.StatusCreated,
-			wantMsg: "Success!, Short URL created",
-			
+			wantMsg:    "Success!, Short URL created",
 		},
 		{
-			name: "invalid request payload",
-			input: `{"failed,"}`,
-			err: nil,
+			name:       "invalid request payload",
+			input:      `{"failed,"}`,
+			err:        nil,
 			wantStatus: http.StatusBadRequest,
-			wantMsg: "Invalid request payload",
-
+			wantMsg:    "Invalid request payload",
 		},
 		{
-			name: "invalid url",
-			input: `{"long_url": "example.com"}`,
-			err: nil,
+			name:       "invalid url",
+			input:      `{"long_url": "example.com"}`,
+			err:        nil,
 			wantStatus: http.StatusBadRequest,
-			wantMsg: "Invalid URL",
+			wantMsg:    "Invalid URL",
 		},
 		{
-			name: "missing long url",
-			input: `{"long_url": ""}`,
-			err: nil,
+			name:       "missing long url",
+			input:      `{"long_url": ""}`,
+			err:        nil,
 			wantStatus: http.StatusBadRequest,
-			wantMsg: "long_url is a required field",
+			wantMsg:    "long_url is a required field",
 		},
 		{
-			name: "failed to create short url",
-			input: `{"long_url": "https://example.com"}`,
-			err: errors.New("Failed to create short URL"),
+			name:       "failed to create short url",
+			input:      `{"long_url": "https://example.com"}`,
+			err:        errors.New("Failed to create short URL"),
 			wantStatus: http.StatusInternalServerError,
-			wantMsg: "Failed to create short URL",
+			wantMsg:    "Failed to create short URL",
 		},
 	}
 
@@ -106,7 +104,7 @@ func TestHandleCreateURL(t *testing.T) {
 				urlService: &mockURLService{
 					createError: tc.err,
 				},
-			} 
+			}
 
 			requestBody := []byte(tc.input)
 			req, _ := http.NewRequest(http.MethodPost, "/api/v1/url/shorten", bytes.NewBuffer(requestBody))
@@ -121,41 +119,41 @@ func TestHandleCreateURL(t *testing.T) {
 }
 
 func TestFetchLongURL(t *testing.T) {
-	testCases := []struct{
-		name string
-		input string
-		wantResult string
-		wantStatus int
+	testCases := []struct {
+		name        string
+		input       string
+		wantResult  string
+		wantStatus  int
 		fetchResult string
-		fetchError error
+		fetchError  error
 	}{
 		{
-			name: "Success",
-			input: "success",
-			wantResult: "https://example.com",
-			wantStatus: http.StatusMovedPermanently,
+			name:        "Success",
+			input:       "success",
+			wantResult:  "https://example.com",
+			wantStatus:  http.StatusMovedPermanently,
 			fetchResult: "https://example.com",
-			fetchError: nil,
+			fetchError:  nil,
 		},
 		{
-			name: "query params short code missing",
-			input: "",
-			wantResult: "",
-			wantStatus: http.StatusBadRequest,
+			name:        "query params short code missing",
+			input:       "",
+			wantResult:  "",
+			wantStatus:  http.StatusBadRequest,
 			fetchResult: "",
-			fetchError: nil,
+			fetchError:  nil,
 		},
 		{
-			name: "service returning error (non database error)",
-			input: "https://example.com",
-			wantResult: "",
-			wantStatus: http.StatusInternalServerError,
+			name:        "service returning error (non database error)",
+			input:       "https://example.com",
+			wantResult:  "",
+			wantStatus:  http.StatusInternalServerError,
 			fetchResult: "",
-			fetchError: errors.New("Error"),
+			fetchError:  errors.New("Error"),
 		},
 		{
-			name: "service returning error (database error)",
-			input: "https://example.com",
+			name:       "service returning error (database error)",
+			input:      "https://example.com",
 			wantResult: "",
 			wantStatus: http.StatusNotFound,
 			fetchError: sql.ErrNoRows,
@@ -167,7 +165,7 @@ func TestFetchLongURL(t *testing.T) {
 			server := &Server{
 				urlService: &mockURLService{
 					FetchResult: tc.fetchResult,
-					FetchError: tc.fetchError,
+					FetchError:  tc.fetchError,
 				},
 			}
 
@@ -182,14 +180,13 @@ func TestFetchLongURL(t *testing.T) {
 			server.handleFetchURL(rr, req)
 
 			assert.Equal(t, rr.Code, tc.wantStatus)
-			if(tc.wantResult != "") {
+			if tc.wantResult != "" {
 				assert.Contains(t, rr.Body.String(), tc.wantResult)
 
 			}
 		})
 	}
 }
-
 
 func TestHealthCheck(t *testing.T) {
 	testcases := []struct {

@@ -4,15 +4,16 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-redis/redis/v8"
 )
 
 type Server struct {
 	db         DB
-	redis      Redis
+	redis      *redis.Client
 	urlService URLService
 }
 
-func NewServer(db DB, redis Redis, urlService URLService) *Server {
+func NewServer(db DB, redis *redis.Client, urlService URLService) *Server {
 	return &Server{db: db, redis: redis, urlService: urlService}
 }
 

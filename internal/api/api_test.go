@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -191,22 +192,32 @@ func TestFetchLongURL(t *testing.T) {
 func TestHealthCheck(t *testing.T) {
 	testcases := []struct {
 		name               string
-		dbShouldFail       bool
-		redisShouldFail    bool
+		setupMockDb        func(*mockDB)
+		setupMockRedis     func(redismock.ClientMock)
 		expectedStatusCode int
 		expectedBody       string
 	}{
 		{
-			name:               "db fails, redis succeeds",
-			dbShouldFail:       true,
-			redisShouldFail:    false,
+			name: "db fails, redis succeeds",
+			setupMockDb: func(db *mockDB) {
+				db.ShouldFail = true
+			},
+			setupMockRedis: func(redis redismock.ClientMock) {
+
+			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedBody:       "Database not connected",
 		},
 		{
-			name:               "db succeeds, redis fails",
-			dbShouldFail:       false,
-			redisShouldFail:    true,
+			name: "db succeeds, redis fails",
+			setupMockDb: func(db *mockDB) {
+				db.ShouldFail = false
+
+			},
+			setupMockRedis: func(redis redismock.ClientMock) {
+				redis.ExpectPing().SetErr(errors.New("mock redis error"))
+
+			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedBody:       "Redis not connected",
 		},
@@ -214,21 +225,22 @@ func TestHealthCheck(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			server := &Server{
-				db: &mockDB{
-					ShouldFail: tc.dbShouldFail,
-				},
-				redis: &mockRedis{
-					ShouldFail: tc.redisShouldFail,
-				},
-			}
+			db := &mockDB{}
+			tc.setupMockDb(db)
 
+			redis, mockRedis := redismock.NewClientMock()
+			tc.setupMockRedis(mockRedis)
+
+			server := &Server{
+				db:    db,
+				redis: redis,
+			}
 			req, _ := http.NewRequest(http.MethodGet, "/api/v1/health", nil)
 			rr := httptest.NewRecorder()
 
 			server.healthCheckHandler(rr, req)
 
-			assert.Equal(t, tc.expectedStatusCode, rr.Code)
+			assert.Equal(t, rr.Code, tc.expectedStatusCode)
 			assert.Contains(t, rr.Body.String(), tc.expectedBody)
 		})
 	}

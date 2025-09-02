@@ -20,10 +20,15 @@ func TestMain(m *testing.M) {
 
 	redisURL := os.Getenv("REDIS_URL_TEST")
 	if redisURL == "" {
-		redisURL = "localhost:6379/1" // DB 1 will be used as test database
+		redisURL = "redis://localhost:6379/1" // DB 1 will be used as test database
 	}
 
-	redisClient, err = NewClient(context.Background(), redisURL)
+	opt, err := redis.ParseURL(redisURL)
+	if err != nil {
+		log.Fatalf("FATAL: unable to parse Redis URL: %v", err)
+	}
+
+	redisClient, err = NewClient(context.Background(), redisURL, opt)
 
 	if err != nil {
 		log.Fatalf("FATAL: unable to connect to Redis: %v", err)

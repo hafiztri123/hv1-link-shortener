@@ -7,11 +7,14 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-func NewClient(ctx context.Context, connStr string) (*redis.Client, error) {
+func NewClient(ctx context.Context, connStr string, opt *redis.Options) (*redis.Client, error) {
+	if opt == nil {
+		opt = &redis.Options{
+			Addr: connStr,
+		}
+	}
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr: connStr,
-	})
+	rdb := redis.NewClient(opt)
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		return nil, err

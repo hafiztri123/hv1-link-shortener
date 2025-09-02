@@ -5,9 +5,12 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/time/rate"
 )
@@ -66,4 +69,36 @@ func TestLoggingMiddleware(t *testing.T) {
 	assert.Contains(t, logOutput, `"path":"/test/path"`)
 	assert.Contains(t, logOutput, `"duration"`)
 
+}
+
+func TestRedisRateLimiter(t *testing.T) {
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	t.Run("request is allowed", func(t *testing.T) {
+		db, mock := redismock.NewClientMock()
+
+		now := time.Now().UnixNano()
+		windowStart := now - (1 * time.Minute).Nanoseconds()
+		ip := "127.0.0.1:1234"
+
+		mock.ExpectTxPipeline()
+		mock.ExpectZRemRangeByScore(ip, "0", strconv.FormatInt(windowStart, 10))
+		mock.ExpectZAdd(ip, &redis.Z{Score: float64(now), Member: now})
+		mock.ExpectZCard(ip).SetVal(5)
+		mock.ExpectExpire(ip, 1*time.Minute)
+		mock.ExpectTxPipelineExec()
+
+		limiter := RedisRateLimiter(db, 10, 1*time.Minute)
+		handler := limiter(testHandler)
+
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, rr.Code, http.StatusOK)
+	})
 }

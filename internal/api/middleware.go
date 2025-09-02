@@ -34,9 +34,11 @@ func RedisRateLimiter(redisClient *redis.Client, limit int, window time.Duration
 
 			pipe := redisClient.TxPipeline()
 			pipe.ZRemRangeByScore(r.Context(), ip, "0", strconv.FormatInt(windowStart, 10))
-			countCmd := pipe.ZCard(r.Context(), ip)
 			pipe.ZAdd(r.Context(), ip, &redis.Z{Score: float64(now), Member: now})
+
+			countCmd := pipe.ZCard(r.Context(), ip)
 			pipe.Expire(r.Context(), ip, window)
+
 			_, err := pipe.Exec(r.Context())
 
 			if err != nil {

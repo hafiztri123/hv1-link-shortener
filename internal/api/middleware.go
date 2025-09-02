@@ -36,16 +36,19 @@ func RedisRateLimiter(redisClient *redis.Client, limit int, window time.Duration
 			pipe.ZRemRangeByScore(r.Context(), ip, "0", strconv.FormatInt(windowStart, 10))
 			pipe.ZAdd(r.Context(), ip, &redis.Z{Score: float64(now), Member: now})
 
-			countCmd := pipe.ZCard(r.Context(), ip)
+			pipe.ZCard(r.Context(), ip)
 			pipe.Expire(r.Context(), ip, window)
 
-			_, err := pipe.Exec(r.Context())
+			cmds, err := pipe.Exec(r.Context())
 
 			if err != nil {
 				slog.Warn("Rate limiter failed", "error", err)
 				next.ServeHTTP(w, r)
 				return
 			}
+
+			countCmd := cmds[2].(*redis.IntCmd)
+
 
 			if countCmd.Val() > int64(limit) {
 				response.Error(w, http.StatusTooManyRequests, "Too many requests")

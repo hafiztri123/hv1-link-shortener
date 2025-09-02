@@ -3,43 +3,58 @@ package database
 import (
 	"context"
 	"hafiztri123/app-link-shortener/internal/url"
-	"log"
-	"os"
 	"testing"
+	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var testRepo *url.Repository
+func TestInsertIntegration(t *testing.T) {
+	ctx := context.Background()
 
-func TestMain(m *testing.M) {
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		log.Printf("WARN: unable to load environment variable: %v", err)
-	}
+	pgContainer, err := postgres.Run(ctx,
+		"postgres:15-alpine",
+		postgres.WithDatabase("test-db"),
+		postgres.WithUsername("user"),
+		postgres.WithPassword("password"),
+		postgres.WithSQLDriver("pgx"),
+		testcontainers.WithWaitStrategy(wait.ForLog("database system is ready to accept connections")),
+	)
 
-	dbURL, ok := os.LookupEnv("DATABASE_URL_TEST")
-	if !ok {
-		log.Println("WARN: unable to get 'DATABASE_URL_TEST' environment variable")
-	}
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, pgContainer.Terminate(ctx))
+	})
 
-	db := Connect(dbURL)
+	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
+	require.NoError(t, err)
+
+	time.Sleep(1 * time.Second) // wait for the database to be ready
+
+	db := Connect(connStr)
 	defer db.Close()
 
-	testRepo = url.NewRepository(db)
+	createTableSQL := `
+		CREATE TABLE urls (
+			id SERIAL PRIMARY KEY,
+			short_code VARCHAR(20) UNIQUE,
+			long_url TEXT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		);
+	`
+	_, err = db.Exec(createTableSQL)
+	require.NoError(t, err)
 
-	os.Exit(m.Run())
-}
+	repo := url.NewRepository(db)
 
-func TestInsert(t *testing.T) {
-	_, err := testRepo.DB.Exec("TRUNCATE TABLE urls RESTART IDENTITY")
-	if err != nil {
-		t.Fatalf("FAIL: unable to reset table for test: %v", err)
-	}
+	id, err := repo.Insert(ctx, "https://example.com")
+	require.NoError(t, err)
+	require.Greater(t, id, int64(0))
 
-	_, err = testRepo.Insert(context.Background(), "https://example.com")
-	if err != nil {
-		t.Errorf("FAIL: unable to insert data to test database: %v", err)
-	}
-
+	retrievedURL, err := repo.GetByID(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, "https://example.com", retrievedURL.LongURL)
 }

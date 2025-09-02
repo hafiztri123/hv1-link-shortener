@@ -7,12 +7,10 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -79,13 +77,13 @@ func TestLoggingMiddleware(t *testing.T) {
 func TestRedisRateLimiter_Integration(t *testing.T) {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
-		Image: "redis:7-alpine",
+		Image:        "redis:7-alpine",
 		ExposedPorts: []string{"6379/tcp"},
-		WaitingFor: wait.ForLog("Ready to accept connections"),
+		WaitingFor:   wait.ForLog("Ready to accept connections"),
 	}
 	redisContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
-		Started: true,
+		Started:          true,
 	})
 	require.NoError(t, err)
 
@@ -99,7 +97,7 @@ func TestRedisRateLimiter_Integration(t *testing.T) {
 	require.NoError(t, err)
 
 	redisAddr := fmt.Sprintf("%s:%s", host, port.Port())
-	redisClient  := redis.NewClient(&redis.Options{
+	redisClient := redis.NewClient(&redis.Options{
 		Addr: redisAddr,
 	})
 
@@ -120,20 +118,19 @@ func TestRedisRateLimiter_Integration(t *testing.T) {
 		for i := 0; i < limit; i++ {
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
 			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr ,req)
-			require.Equal(t, http.StatusOK, rr.Code, "request %d should be allowed", i + 1)
+			handler.ServeHTTP(rr, req)
+			require.Equal(t, http.StatusOK, rr.Code, "request %d should be allowed", i+1)
 		}
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
-		require.Equal(t, http.StatusTooManyRequests, rr.Code, "request %d should be blocked", limit + 1)
+		require.Equal(t, http.StatusTooManyRequests, rr.Code, "request %d should be blocked", limit+1)
 
 		time.Sleep(window)
 		req = httptest.NewRequest(http.MethodGet, "/", nil)
 		rr = httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
-		require.Equal(t, http.StatusOK, rr.Code, "request %d should be allowed", limit + 2)
+		require.Equal(t, http.StatusOK, rr.Code, "request %d should be allowed", limit+2)
 	})
 }
-

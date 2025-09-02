@@ -100,7 +100,7 @@ func TestRedisRateLimiter(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := redismock.NewClientMock()
 			now := time.Now().UnixNano()
-			windowStart := now - (1*time.Minute).Nanoseconds()
+			windowStart := now - (1 * time.Minute).Nanoseconds()
 			ip := "127.0.0.1:1234"
 
 			tc.setupMock(mock, now, windowStart, ip)
@@ -115,11 +115,7 @@ func TestRedisRateLimiter(t *testing.T) {
 
 			assert.Equal(t, rr.Code, tc.wantStatusCode)
 
-
-
-
 		})
 	}
-
 
 }

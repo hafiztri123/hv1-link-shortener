@@ -49,7 +49,6 @@ func RedisRateLimiter(redisClient *redis.Client, limit int, window time.Duration
 
 			countCmd := cmds[2].(*redis.IntCmd)
 
-
 			if countCmd.Val() > int64(limit) {
 				response.Error(w, http.StatusTooManyRequests, "Too many requests")
 				return

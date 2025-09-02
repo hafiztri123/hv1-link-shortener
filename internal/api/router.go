@@ -1,11 +1,13 @@
 package api
 
 import (
+	"hafiztri123/app-link-shortener/internal/metrics"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Server struct {
@@ -24,10 +26,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(RateLimiter(10, 20))
 	r.Use(RedisRateLimiter(s.redis, 5, 1*time.Minute))
 
+	r.Use(metrics.PrometheusMiddleware)
 	r.Route("/api/v1", func(v1 chi.Router) {
 		v1.Get("/health", s.healthCheckHandler)
 		v1.Post("/url/shorten", s.handleCreateURL)
 		v1.Get("/url/{shortCode}", s.handleFetchURL)
+		v1.Handle("/metrics", promhttp.Handler())
 	})
 
 	return r

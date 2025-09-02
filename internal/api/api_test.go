@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-redis/redis/v8"
 	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,20 +22,6 @@ type mockURLService struct {
 	createError error
 	FetchResult string
 	FetchError  error
-}
-
-type mockRedis struct {
-	ShouldFail bool
-}
-
-func (m *mockRedis) Ping(ctx context.Context) *redis.StatusCmd {
-	cmd := redis.NewStatusCmd(ctx)
-	if m.ShouldFail {
-		cmd.SetErr(errors.New("FAIL: unable to ping mock redis"))
-	}
-
-	return cmd
-
 }
 
 func (m *mockDB) Ping() error {

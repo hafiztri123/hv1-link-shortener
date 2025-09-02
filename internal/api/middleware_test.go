@@ -2,16 +2,19 @@ package api
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/go-redis/redismock/v8"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"golang.org/x/time/rate"
 )
 
@@ -71,51 +74,63 @@ func TestLoggingMiddleware(t *testing.T) {
 
 }
 
-func TestRedisRateLimiter(t *testing.T) {
-
-	testCases := []struct {
-		name           string
-		setupMock      func(mock redismock.ClientMock, now int64, windowStart int64, ip string)
-		wantStatusCode int
-	}{
-		{
-			name: "Request is allowed",
-			setupMock: func(mock redismock.ClientMock, now int64, windowStart int64, ip string) {
-				mock.ExpectTxPipeline()
-				mock.ExpectZRemRangeByScore(ip, "0", strconv.FormatInt(windowStart, 10))
-				mock.ExpectZAdd(ip, &redis.Z{Score: float64(now), Member: now})
-				mock.ExpectZCard(ip).SetVal(5)
-				mock.ExpectExpire(ip, 1*time.Minute)
-				mock.ExpectTxPipelineExec()
-			},
-			wantStatusCode: http.StatusOK,
-		},
+func TestRedisRateLimiter_Integration(t *testing.T) {
+	ctx := context.Background()
+	req := testcontainers.ContainerRequest{
+		Image:        "redis:7-alpine",
+		ExposedPorts: []string{"6379/tcp"},
+		WaitingFor:   wait.ForLog("Ready to accept connections"),
 	}
+	redisContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	require.NoError(t, err)
 
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
+	t.Cleanup(func() {
+		require.NoError(t, redisContainer.Terminate(ctx))
 	})
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			db, mock := redismock.NewClientMock()
-			now := time.Now().UnixNano()
-			windowStart := now - (1 * time.Minute).Nanoseconds()
-			ip := "127.0.0.1:1234"
+	host, err := redisContainer.Host(ctx)
+	require.NoError(t, err)
+	port, err := redisContainer.MappedPort(ctx, "6379")
+	require.NoError(t, err)
 
-			tc.setupMock(mock, now, windowStart, ip)
+	redisAddr := fmt.Sprintf("%s:%s", host, port.Port())
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: redisAddr,
+	})
 
-			limiter := RedisRateLimiter(db, 10, 1*time.Minute)
-			handler := limiter(testHandler)
+	require.NoError(t, redisClient.Ping(ctx).Err())
 
-			rr := httptest.NewRecorder()
-			rrl := httptest.NewRequest(http.MethodGet, "/", nil)
+	t.Run("allow request below the limit and blocks request above it", func(t *testing.T) {
+		limit := 5
+		window := 2 * time.Second
 
-			handler.ServeHTTP(rr, rrl)
+		limiterMiddleware := RedisRateLimiter(redisClient, limit, window)
 
-			assert.Equal(t, rr.Code, tc.wantStatusCode)
-
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK"))
 		})
-	}
+		handler := limiterMiddleware(testHandler)
 
+		for i := 0; i < limit; i++ {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+			require.Equal(t, http.StatusOK, rr.Code, "request %d should be allowed", i+1)
+		}
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+		require.Equal(t, http.StatusTooManyRequests, rr.Code, "request %d should be blocked", limit+1)
+
+		time.Sleep(window)
+		req = httptest.NewRequest(http.MethodGet, "/", nil)
+		rr = httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+		require.Equal(t, http.StatusOK, rr.Code, "request %d should be allowed", limit+2)
+	})
 }

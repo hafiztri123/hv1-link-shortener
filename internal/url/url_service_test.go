@@ -102,8 +102,8 @@ func TestFetchLongURL(t *testing.T) {
 			setupMock: func(repoMock *MockRepository, redisMock redismock.ClientMock) {
 				redisMock.ExpectGet("url:g8").SetErr(redis.Nil)
 				redisMock.ExpectSetNX("lock:g8", "1", 10*time.Second).SetVal(true)
-				redisMock.ExpectDel("lock:g8").SetVal(1)
 				redisMock.ExpectSet("url:g8", "https://db.com", 1*time.Hour).SetVal("OK")
+				redisMock.ExpectDel("lock:g8").SetVal(1)
 				repoMock.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
 					return &URL{LongURL: "https://db.com"}, nil
 				}

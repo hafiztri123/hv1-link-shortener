@@ -31,7 +31,7 @@ func main() {
 	}
 
 	db := database.Connect(cfg.DatabaseURL)
-	redis, err := redis.NewClient(context.Background(), cfg.RedisURL)
+	redis, err := redis.NewClient(context.Background(), cfg.RedisURL, nil)
 
 	urlRepo := url.NewRepository(db)
 	urlService := url.NewService(urlRepo, redis, cfg.IDOffset)

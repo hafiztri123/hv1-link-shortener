@@ -192,25 +192,24 @@ func TestFetchLongURL(t *testing.T) {
 func TestHealthCheck(t *testing.T) {
 	testcases := []struct {
 		name               string
-		setupMockDb       func(*mockDB)
-		setupMockRedis    func(redismock.ClientMock)
+		setupMockDb        func(*mockDB)
+		setupMockRedis     func(redismock.ClientMock)
 		expectedStatusCode int
 		expectedBody       string
 	}{
 		{
-			name:               "db fails, redis succeeds",
+			name: "db fails, redis succeeds",
 			setupMockDb: func(db *mockDB) {
-				db.ShouldFail  = true
+				db.ShouldFail = true
 			},
 			setupMockRedis: func(redis redismock.ClientMock) {
-
 
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedBody:       "Database not connected",
 		},
 		{
-			name:               "db succeeds, redis fails",
+			name: "db succeeds, redis fails",
 			setupMockDb: func(db *mockDB) {
 				db.ShouldFail = false
 
@@ -233,7 +232,7 @@ func TestHealthCheck(t *testing.T) {
 			tc.setupMockRedis(mockRedis)
 
 			server := &Server{
-				db: db,
+				db:    db,
 				redis: redis,
 			}
 			req, _ := http.NewRequest(http.MethodGet, "/api/v1/health", nil)

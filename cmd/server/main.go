@@ -51,7 +51,7 @@ func main() {
 	defer redis.Close()
 
 	srv := &http.Server{
-		Addr: ":8080",
+		Addr:    ":8080",
 		Handler: router,
 	}
 
@@ -78,6 +78,5 @@ func main() {
 	}
 
 	slog.Info("Server shutdown successfully")
-
 
 }

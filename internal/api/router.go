@@ -23,7 +23,7 @@ func NewServer(db DB, redis *redis.Client, urlService URLService) *Server {
 func (s *Server) RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 
-	r.Use(RateLimiter(10, 20))
+	// r.Use(RateLimiter(10, 20))
 	r.Use(RedisRateLimiter(s.redis, 5, 1*time.Minute))
 
 	r.Use(metrics.PrometheusMiddleware)

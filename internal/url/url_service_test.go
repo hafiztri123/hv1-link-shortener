@@ -12,9 +12,10 @@ import (
 )
 
 type MockRepository struct {
-	InsertFunc          func(ctx context.Context, longURL string) (int64, error)
-	UpdateShortCodeFunc func(ctx context.Context, id int64, shortCode string) error
-	GetByIDFunc         func(ctx context.Context, id int64) (*URL, error)
+	InsertFunc                func(ctx context.Context, longURL string) (int64, error)
+	UpdateShortCodeFunc       func(ctx context.Context, id int64, shortCode string) error
+	GetByIDFunc               func(ctx context.Context, id int64) (*URL, error)
+	FindOrCreateShortCodeFunc func(ctx context.Context, longURL string, idOffset uint64) (string, error)
 }
 
 func (m *MockRepository) Insert(ctx context.Context, longURL string) (int64, error) {
@@ -29,36 +30,40 @@ func (m *MockRepository) GetByID(ctx context.Context, id int64) (*URL, error) {
 	return m.GetByIDFunc(ctx, id)
 }
 
-func TestCreateShortCode(t *testing.T) {
+func (m *MockRepository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error) {
+	return m.FindOrCreateShortCodeFunc(ctx, longURL, idOffset)
+}
+
+func TestCreateShortcode(t *testing.T) {
 	testCases := []struct {
-		name          string
-		expectedInput string
-		setupMock     func(*MockRepository)
-		expectedErr   error
+		name      string
+		longUrl   string
+		setupMock func(*MockRepository)
+		want      string
+		wantErr   error
 	}{
 		{
-			name:          "success",
-			expectedInput: "https://example.com/success",
+			name:    "success",
+			longUrl: "https://example.com/success",
 			setupMock: func(mock *MockRepository) {
-				mock.InsertFunc = func(ctx context.Context, longURL string) (int64, error) {
-					return 123, nil
-				}
-
-				mock.UpdateShortCodeFunc = func(ctx context.Context, id int64, shortCode string) error {
-					return nil
+				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64) (string, error) {
+					return "success", nil
 				}
 			},
-			expectedErr: nil,
+			want:    "success",
+			wantErr: nil,
 		},
+
 		{
-			name:          "database insert fails",
-			expectedInput: "https://example.com/failure",
+			name:    "database error",
+			longUrl: "https://example.com/failure",
 			setupMock: func(mock *MockRepository) {
-				mock.InsertFunc = func(ctx context.Context, longURL string) (int64, error) {
-					return 0, errors.New("database error")
+				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64) (string, error) {
+					return "", errors.New("database error")
 				}
 			},
-			expectedErr: errors.New("database error"),
+			want:    "",
+			wantErr: errors.New("database error"),
 		},
 	}
 
@@ -66,17 +71,69 @@ func TestCreateShortCode(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			MockRepository := &MockRepository{}
 			tc.setupMock(MockRepository)
-			Service := NewService(MockRepository, nil, 1000)
+			service := &Service{repo: MockRepository, idOffset: 1000}
+			got, err := service.CreateShortCode(context.Background(), tc.longUrl)
 
-			err := Service.CreateShortCode(context.Background(), tc.expectedInput)
-
-			if (err != nil && tc.expectedErr == nil) || (err == nil && tc.expectedErr != nil) || (err != nil && tc.expectedErr != nil && err.Error() != tc.expectedErr.Error()) {
-				t.Errorf("unexpected error: got %v want %v", err, tc.expectedErr)
+			if tc.wantErr != nil {
+				assert.Error(t, err)
+				return
 			}
 
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want, got)
 		})
 	}
+
 }
+
+// func TestCreateShortCode(t *testing.T) {
+// 	testCases := []struct {
+// 		name          string
+// 		expectedInput string
+// 		setupMock     func(*MockRepository)
+// 		expectedErr   error
+// 	}{
+// 		{
+// 			name:          "success",
+// 			expectedInput: "https://example.com/success",
+// 			setupMock: func(mock *MockRepository) {
+// 				mock.InsertFunc = func(ctx context.Context, longURL string) (int64, error) {
+// 					return 123, nil
+// 				}
+
+// 				mock.UpdateShortCodeFunc = func(ctx context.Context, id int64, shortCode string) error {
+// 					return nil
+// 				}
+// 			},
+// 			expectedErr: nil,
+// 		},
+// 		{
+// 			name:          "database insert fails",
+// 			expectedInput: "https://example.com/failure",
+// 			setupMock: func(mock *MockRepository) {
+// 				mock.InsertFunc = func(ctx context.Context, longURL string) (int64, error) {
+// 					return 0, errors.New("database error")
+// 				}
+// 			},
+// 			expectedErr: errors.New("database error"),
+// 		},
+// 	}
+
+// 	for _, tc := range testCases {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			MockRepository := &MockRepository{}
+// 			tc.setupMock(MockRepository)
+// 			Service := NewService(MockRepository, nil, 1000)
+
+// 			_, err := Service.CreateShortCode(context.Background(), tc.expectedInput)
+
+// 			if (err != nil && tc.expectedErr == nil) || (err == nil && tc.expectedErr != nil) || (err != nil && tc.expectedErr != nil && err.Error() != tc.expectedErr.Error()) {
+// 				t.Errorf("unexpected error: got %v want %v", err, tc.expectedErr)
+// 			}
+
+// 		})
+// 	}
+// }
 
 func TestFetchLongURL(t *testing.T) {
 	testCases := []struct {

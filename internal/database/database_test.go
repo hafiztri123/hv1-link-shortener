@@ -41,7 +41,7 @@ func TestInsertIntegration(t *testing.T) {
 		CREATE TABLE urls (
 			id SERIAL PRIMARY KEY,
 			short_code VARCHAR(20) UNIQUE,
-			long_url TEXT NOT NULL,
+			long_url TEXT NOT NULL UNIQUE,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		);
 	`
@@ -50,11 +50,13 @@ func TestInsertIntegration(t *testing.T) {
 
 	repo := url.NewRepository(db)
 
-	id, err := repo.Insert(ctx, "https://example.com")
+	idOffset := 1000
+	shortCode, err := repo.FindOrCreateShortCode(ctx, "https://example.com", uint64(idOffset))
 	require.NoError(t, err)
-	require.Greater(t, id, int64(0))
 
-	retrievedURL, err := repo.GetByID(ctx, id)
+	id := url.FromBase62(shortCode) - uint64(idOffset)
+
+	retrievedURL, err := repo.GetByID(ctx, int64(id))
 	require.NoError(t, err)
 	require.Equal(t, "https://example.com", retrievedURL.LongURL)
 }

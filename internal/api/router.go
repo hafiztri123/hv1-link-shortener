@@ -24,7 +24,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 
 	// r.Use(RateLimiter(10, 20))
-	r.Use(RedisRateLimiter(s.redis, 5, 1*time.Minute))
+	r.Use(RedisRateLimiter(s.redis, 20, 1*time.Minute))
 
 	r.Use(metrics.PrometheusMiddleware)
 	r.Route("/api/v1", func(v1 chi.Router) {

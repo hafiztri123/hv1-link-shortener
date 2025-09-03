@@ -18,26 +18,18 @@ func NewService(repo URLRepository, redis *redis.Client, idOffset uint64) *Servi
 	return &Service{repo: repo, redis: redis, idOffset: idOffset}
 }
 
-func (s *Service) CreateShortCode(ctx context.Context, longURL string) error {
-	id, err := s.repo.Insert(ctx, longURL)
-
+func (s *Service) CreateShortCode(ctx context.Context, longURL string) (string, error) {
+	shortCode, err := s.repo.FindOrCreateShortCode(ctx, longURL, s.idOffset)
 	if err != nil {
-		slog.Error("Failed to insert URL", "error", err, "url", longURL)
-		return err
+		slog.Error("Failed to find or create short code", "error", err, "url", longURL)
+		return "", err
 	}
 
-	shortcode := toBase62(uint64(id) + s.idOffset)
-
-	err = s.repo.UpdateShortCode(ctx, id, shortcode)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return shortCode, nil
 }
 
 func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
-	id := fromBase62(shortCode) - s.idOffset
+	id := FromBase62(shortCode) - s.idOffset
 
 	cacheKey := "url:" + shortCode
 	lockKey := "lock:" + shortCode

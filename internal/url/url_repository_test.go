@@ -40,26 +40,15 @@ func TestRepository_IntegrationFlow(t *testing.T) {
 	ctx := context.Background()
 
 	longURL := "https://www.google.com/search?q=golang-testing"
+	idOffset := 1000
 
-	id, err := repo.Insert(ctx, longURL)
+	shortcode, err := repo.FindOrCreateShortCode(ctx, longURL, uint64(idOffset))
 	require.NoError(t, err)
-	require.Equal(t, int64(1), id, "Expected: 1, Actual: %d", id)
 
-	retrievedURL, err := repo.GetByID(ctx, id)
+	retrievedURL, err := repo.GetByID(ctx, int64((FromBase62(shortcode) - uint64(idOffset))))
 	require.NoError(t, err)
 	require.NotNil(t, retrievedURL, "Expected: URL")
-	require.Equal(t, id, retrievedURL.ID, "Expected: %d, Actual: %d", id, retrievedURL.ID)
 	require.Equal(t, longURL, retrievedURL.LongURL, "Expected: %s, Actual: %s", longURL, retrievedURL.LongURL)
-	require.False(t, retrievedURL.ShortCode.Valid, "Expected: empty string, Actual: %s", retrievedURL.ShortCode)
-
-	shortCode := "GoTest"
-	err = repo.UpdateShortCode(ctx, id, shortCode)
-	require.NoError(t, err)
-
-	updatedURL, err := repo.GetByID(ctx, id)
-	require.NoError(t, err)
-	require.NotNil(t, updatedURL, "Expected: URL")
-	require.True(t, updatedURL.ShortCode.Valid, "Expected: %s, Actual: %s", shortCode, updatedURL.ShortCode)
 
 	_, err = repo.GetByID(ctx, 999)
 	require.Error(t, err)

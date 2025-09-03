@@ -25,7 +25,7 @@ func toBase62(urlId uint64) string {
 	return reverse(sb.String())
 }
 
-func fromBase62(shortCode string) uint64 {
+func FromBase62(shortCode string) uint64 {
 	var n uint64
 	for i, char := range shortCode {
 		power := len(shortCode) - (i + 1)

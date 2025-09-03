@@ -29,7 +29,7 @@ func (s *Service) CreateShortCode(ctx context.Context, longURL string) (string, 
 }
 
 func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
-	id := fromBase62(shortCode) - s.idOffset
+	id := FromBase62(shortCode) - s.idOffset
 
 	cacheKey := "url:" + shortCode
 	lockKey := "lock:" + shortCode

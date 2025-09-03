@@ -51,7 +51,4 @@ func TestPrometheusMiddleware(t *testing.T) {
 
 	require.Equal(t, 1, count, "Expected 1 request but got %d", count)
 
-
-
-
 }

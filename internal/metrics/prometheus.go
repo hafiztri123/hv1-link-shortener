@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
-
 )
 
 var (
@@ -39,6 +38,6 @@ func PrometheusMiddleware(next http.Handler) http.Handler {
 
 		httpRequestsTotal.WithLabelValues(r.Method, r.URL.Path).Inc()
 
-		next.ServeHTTP(w,r)
+		next.ServeHTTP(w, r)
 	})
 }

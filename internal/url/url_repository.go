@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-
 const PG_UNIQUE_CONSRAINT_VIOLATION_CODE = "23505"
 
 type URLRepository interface {

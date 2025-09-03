@@ -12,11 +12,10 @@ import (
 )
 
 type MockRepository struct {
-	InsertFunc          func(ctx context.Context, longURL string) (int64, error)
-	UpdateShortCodeFunc func(ctx context.Context, id int64, shortCode string) error
-	GetByIDFunc         func(ctx context.Context, id int64) (*URL, error)
+	InsertFunc                func(ctx context.Context, longURL string) (int64, error)
+	UpdateShortCodeFunc       func(ctx context.Context, id int64, shortCode string) error
+	GetByIDFunc               func(ctx context.Context, id int64) (*URL, error)
 	FindOrCreateShortCodeFunc func(ctx context.Context, longURL string, idOffset uint64) (string, error)
-
 }
 
 func (m *MockRepository) Insert(ctx context.Context, longURL string) (int64, error) {
@@ -37,34 +36,33 @@ func (m *MockRepository) FindOrCreateShortCode(ctx context.Context, longURL stri
 
 func TestCreateShortcode(t *testing.T) {
 	testCases := []struct {
-		name string
-		longUrl string
+		name      string
+		longUrl   string
 		setupMock func(*MockRepository)
-		want string
-		wantErr error
+		want      string
+		wantErr   error
 	}{
 		{
-			name: "success",
+			name:    "success",
 			longUrl: "https://example.com/success",
 			setupMock: func(mock *MockRepository) {
 				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64) (string, error) {
 					return "success", nil
 				}
 			},
-			want : "success",
+			want:    "success",
 			wantErr: nil,
-
 		},
 
 		{
-			name: "database error",
+			name:    "database error",
 			longUrl: "https://example.com/failure",
 			setupMock: func(mock *MockRepository) {
 				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64) (string, error) {
 					return "", errors.New("database error")
 				}
 			},
-			want : "",
+			want:    "",
 			wantErr: errors.New("database error"),
 		},
 	}

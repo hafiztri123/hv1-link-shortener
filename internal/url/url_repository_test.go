@@ -40,7 +40,6 @@ func TestRepository_IntegrationFlow(t *testing.T) {
 	repo := NewRepository(db)
 	ctx := context.Background()
 
-
 	longURL := "https://www.google.com/search?q=golang-testing"
 
 	shortCode1, err := repo.FindOrCreateShortCode(ctx, longURL, 1000)
@@ -59,6 +58,3 @@ func TestRepository_IntegrationFlow(t *testing.T) {
 	require.True(t, retrievedURL.ShortCode.Valid)
 	require.Equal(t, shortCode1, retrievedURL.ShortCode.String)
 }
-
-
-

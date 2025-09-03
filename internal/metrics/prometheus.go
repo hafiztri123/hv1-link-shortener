@@ -40,7 +40,5 @@ func PrometheusMiddleware(next http.Handler) http.Handler {
 		httpRequestsTotal.WithLabelValues(r.Method, r.URL.Path).Inc()
 
 		next.ServeHTTP(w,r)
-
-
 	})
 }

@@ -19,6 +19,7 @@ type mockDB struct {
 }
 
 type mockURLService struct {
+	createResult string
 	createError error
 	FetchResult string
 	FetchError  error
@@ -31,13 +32,16 @@ func (m *mockDB) Ping() error {
 	return nil
 }
 
-func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) error {
-	return m.createError
+func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) (string, error) {
+	return m.createResult, m.createError
 }
 
 func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
 	return m.FetchResult, m.FetchError
 }
+
+
+
 
 func TestHandleCreateURL(t *testing.T) {
 	testCases := []struct {
@@ -51,7 +55,7 @@ func TestHandleCreateURL(t *testing.T) {
 			name:       "success",
 			input:      `{"long_url": "https://example.com"}`,
 			err:        nil,
-			wantStatus: http.StatusCreated,
+			wantStatus: http.StatusOK,
 			wantMsg:    "Success!, Short URL created",
 		},
 		{

@@ -65,13 +65,13 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.urlService.CreateShortCode(r.Context(), req.LongURL)
+	shortcode, err := s.urlService.CreateShortCode(r.Context(), req.LongURL)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to create short URL")
 		return
 	}
 
-	response.Success(w, "Success!, Short URL created", http.StatusCreated)
+	response.Success(w, "Success!, Short URL created", http.StatusOK, url.CreateURLResponse{ShortCode: shortcode})
 }
 
 func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {

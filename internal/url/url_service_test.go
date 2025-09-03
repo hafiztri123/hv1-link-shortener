@@ -2,6 +2,7 @@ package url
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -32,6 +33,59 @@ func (m *MockRepository) GetByID(ctx context.Context, id int64) (*URL, error) {
 
 func (m *MockRepository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error) {
 	return m.FindOrCreateShortCodeFunc(ctx, longURL, idOffset)
+}
+
+func TestCreateShortcode(t *testing.T) {
+	testCases := []struct {
+		name string
+		longUrl string
+		setupMock func(*MockRepository)
+		want string
+		wantErr error
+	}{
+		{
+			name: "success",
+			longUrl: "https://example.com/success",
+			setupMock: func(mock *MockRepository) {
+				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64) (string, error) {
+					return "success", nil
+				}
+			},
+			want : "success",
+			wantErr: nil,
+
+		},
+
+		{
+			name: "database error",
+			longUrl: "https://example.com/failure",
+			setupMock: func(mock *MockRepository) {
+				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64) (string, error) {
+					return "", errors.New("database error")
+				}
+			},
+			want : "",
+			wantErr: errors.New("database error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			MockRepository := &MockRepository{}
+			tc.setupMock(MockRepository)
+			service := &Service{repo: MockRepository, idOffset: 1000}
+			got, err := service.CreateShortCode(context.Background(), tc.longUrl)
+
+			if tc.wantErr != nil {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+
 }
 
 // func TestCreateShortCode(t *testing.T) {

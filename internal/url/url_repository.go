@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -41,6 +42,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*URL, error) {
 func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error) {
 	tx, err := r.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
+		slog.Error("Failed to begin transaction", "error", err)
 		return "", err
 	}
 
@@ -53,7 +55,7 @@ func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, 
 		return shortCode.String, nil
 	}
 
-	if err != sql.ErrNoRows {
+	if err != nil && err != sql.ErrNoRows {
 		return "", err
 	}
 

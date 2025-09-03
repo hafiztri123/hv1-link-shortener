@@ -41,7 +41,7 @@ func TestInsertIntegration(t *testing.T) {
 		CREATE TABLE urls (
 			id SERIAL PRIMARY KEY,
 			short_code VARCHAR(20) UNIQUE,
-			long_url TEXT NOT NULL,
+			long_url TEXT NOT NULL UNIQUE,
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		);
 	`

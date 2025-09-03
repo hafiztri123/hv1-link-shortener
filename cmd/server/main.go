@@ -7,10 +7,12 @@ import (
 	"hafiztri123/app-link-shortener/internal/database"
 	"hafiztri123/app-link-shortener/internal/redis"
 	"hafiztri123/app-link-shortener/internal/url"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -18,7 +20,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Note: .env file not found, using environment variable from OS")
+		slog.Warn(".env file not found, using environment variable from OS", "error", err)
 	}
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -27,27 +29,55 @@ func main() {
 	cfg, err := config.Load()
 
 	if err != nil {
-		log.Fatalf("FATAL: Could not load config: %v", err)
+		slog.Error("Could not load config", "error", err)
+		os.Exit(1)
 	}
 
 	db := database.Connect(cfg.DatabaseURL)
 	redis, err := redis.NewClient(context.Background(), cfg.RedisURL, nil)
 
-	urlRepo := url.NewRepository(db)
-	urlService := url.NewService(urlRepo, redis, cfg.IDOffset)
-
 	if err != nil {
-		log.Fatalf("FATAL: Could not connect to Redis: %v", err)
+		slog.Error("Could not connect to redis", "error", err)
+		os.Exit(1)
 	}
 
-	defer db.Close()
-	defer redis.Close()
+	urlRepo := url.NewRepository(db)
+	urlService := url.NewService(urlRepo, redis, cfg.IDOffset)
 
 	server := api.NewServer(db, redis, urlService)
 	router := server.RegisterRoutes()
 
-	log.Println("INFO: Listening on :8080")
-	if err := http.ListenAndServe(":8080", router); err != nil {
-		log.Fatalf("Could not start server: %v", err)
+	defer db.Close()
+	defer redis.Close()
+
+	srv := &http.Server{
+		Addr: ":8080",
+		Handler: router,
 	}
+
+	go func() {
+		slog.Info("Listening on port :8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("Failed to start server", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit
+	slog.Info("Shutdown signal received, starting graceful shutdown...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		slog.Error("Server shutdown failed", "error", err)
+		os.Exit(1)
+	}
+
+	slog.Info("Server shutdown successfully")
+
+
 }

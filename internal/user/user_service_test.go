@@ -10,51 +10,48 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-
 type mockRepository struct {
 	getByEmailResult *User
-	getByEmailErr error
-	insertErr error
+	getByEmailErr    error
+	insertErr        error
 }
 
-func (m *mockRepository) 	Insert(ctx context.Context, email string, password string) error{
+func (m *mockRepository) Insert(ctx context.Context, email string, password string) error {
 	return m.insertErr
 }
 
-func (m *mockRepository) 	GetByEmail(ctx context.Context, email string) (*User, error) {
+func (m *mockRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	return m.getByEmailResult, m.getByEmailErr
 }
-
 
 func TestRegister(t *testing.T) {
 
 	data := &User{
-				Id: 1,
-				Email: "example@yahoo.com",
-				Password: "example",
-				Created_at: time.Now(),
+		Id:         1,
+		Email:      "example@yahoo.com",
+		Password:   "example",
+		Created_at: time.Now(),
 	}
 
-
-	testCases := []struct{
-		name string
+	testCases := []struct {
+		name             string
 		getByEmailResult *User
-		getByEmailErr error
-		insertErr error
-		wantErr error
+		getByEmailErr    error
+		insertErr        error
+		wantErr          error
 	}{
 		{
-			name: "success",
-			getByEmailResult:  data,
-			getByEmailErr: nil,
-			insertErr: nil,
-			wantErr: nil,
+			name:             "success",
+			getByEmailResult: data,
+			getByEmailErr:    nil,
+			insertErr:        nil,
+			wantErr:          nil,
 		},
 		{
-			name: "get by email error",
+			name:             "get by email error",
 			getByEmailResult: data,
-			insertErr: EmailAlreadyExists,
-			wantErr: EmailAlreadyExists,
+			insertErr:        EmailAlreadyExists,
+			wantErr:          EmailAlreadyExists,
 		},
 	}
 
@@ -62,14 +59,14 @@ func TestRegister(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockRepo := &mockRepository{
 				getByEmailResult: tc.getByEmailResult,
-				getByEmailErr: tc.getByEmailErr,
-				insertErr: tc.insertErr,
+				getByEmailErr:    tc.getByEmailErr,
+				insertErr:        tc.insertErr,
 			}
 
 			srv := NewService(nil, mockRepo)
 
-			err := srv.Register(context.Background(), CreateUserRequest{
-				Email: tc.getByEmailResult.Email,
+			err := srv.Register(context.Background(), RegisterRequest{
+				Email:    tc.getByEmailResult.Email,
 				Password: tc.getByEmailResult.Password,
 			})
 
@@ -83,68 +80,67 @@ func TestLogin(t *testing.T) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	require.NoError(t, err)
 
-	testCases := []struct{
-		name string
-		request UserLoginRequest
+	testCases := []struct {
+		name             string
+		request          LoginRequest
 		getByEmailResult User
-		getByEmailErr error
-		wantErr bool
+		getByEmailErr    error
+		wantErr          bool
 	}{
 		{
 			name: "success",
-			request: UserLoginRequest{
-				Email: "example@mail.com",
+			request: LoginRequest{
+				Email:    "example@mail.com",
 				Password: password,
-
 			},
 			getByEmailResult: User{
-				Id: 1,
-				Email: "example@mail.com",
-				Password: string(hashedPassword),
+				Id:         1,
+				Email:      "example@mail.com",
+				Password:   string(hashedPassword),
 				Created_at: time.Now(),
 			},
 			getByEmailErr: nil,
-			wantErr: false,
+			wantErr:       false,
 		},
 		{
 			name: "invalid password",
-			request: UserLoginRequest{
-				Email: "example@mail.com",
+			request: LoginRequest{
+				Email:    "example@mail.com",
 				Password: "invalid",
 			},
 			getByEmailResult: User{
-				Id: 1,
-				Email: "example@mail.com",
-				Password: string(hashedPassword),
+				Id:         1,
+				Email:      "example@mail.com",
+				Password:   string(hashedPassword),
 				Created_at: time.Now(),
 			},
 			getByEmailErr: nil,
-			wantErr: true,
+			wantErr:       true,
 		},
 		{
 			name: "not using hashed password",
-			request: UserLoginRequest{
-				Email: "example@mail.com",
+			request: LoginRequest{
+				Email:    "example@mail.com",
 				Password: password,
 			},
 			getByEmailResult: User{
-				Id: 1,
-				Email: "example@mail.com",
-				Password: password,
+				Id:         1,
+				Email:      "example@mail.com",
+				Password:   password,
 				Created_at: time.Now(),
 			},
 			getByEmailErr: nil,
-			wantErr: true,
+			wantErr:       true,
 		},
 		{
 			name: "get by email error",
-			request: UserLoginRequest{
-				Email: "example@mail.com",
+			request: LoginRequest{
+				Email:    "example@mail.com",
 				Password: password,
 			},
 			getByEmailResult: User{},
-			getByEmailErr: UserNotFound,
-			wantErr: true,
+			getByEmailErr:    UserNotFound,
+			wantErr:          true,
 		},
 	}
 
@@ -152,7 +148,7 @@ func TestLogin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockRepo := &mockRepository{
 				getByEmailResult: &tc.getByEmailResult,
-				getByEmailErr: tc.getByEmailErr,
+				getByEmailErr:    tc.getByEmailErr,
 			}
 
 			srv := NewService(nil, mockRepo)

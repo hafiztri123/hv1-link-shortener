@@ -95,8 +95,8 @@ func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, longURL, http.StatusMovedPermanently)
 }
 
-func (s *Server) handleRegister (w http.ResponseWriter, r *http.Request) {
-	var req user.CreateUserRequest
+func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
+	var req user.RegisterRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "Invalid request payload")
@@ -125,7 +125,7 @@ func (s *Server) handleRegister (w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
-	var req user.UserLoginRequest
+	var req user.LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "Invalid request payload")

@@ -34,6 +34,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 		v1.Get("/health", s.healthCheckHandler)
 		v1.Post("/url/shorten", s.handleCreateURL)
 		v1.Get("/url/{shortCode}", s.handleFetchURL)
+		v1.Post("/user/register", s.handleRegister)
+		v1.Post("/user/login", s.handleLogin)
 		v1.Handle("/metrics", promhttp.Handler())
 	})
 

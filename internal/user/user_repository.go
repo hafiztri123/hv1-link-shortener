@@ -7,15 +7,12 @@ import (
 
 	"hafiztri123/app-link-shortener/internal/utils"
 
-
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type UserRepository interface {
 	Insert(ctx context.Context, email string, password string) error
 	GetByEmail(ctx context.Context, email string) (*User, error)
-
-
 }
 
 type Repository struct {
@@ -27,7 +24,6 @@ func NewRepository(db *sql.DB) *Repository {
 		db: db,
 	}
 }
-
 
 func (r *Repository) Insert(ctx context.Context, email string, password string) error {
 	insertQuery := `INSERT INTO users (email, password) VALUES ($1, $2)`

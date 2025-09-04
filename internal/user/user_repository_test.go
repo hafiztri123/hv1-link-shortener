@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"testing"
 
-	_ "hafiztri123/app-link-shortener/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
+	_ "hafiztri123/app-link-shortener/internal/utils"
 )
-
 
 func setupTestDB(t *testing.T) *sql.DB {
 	dsn := fmt.Sprintf("file:%s?mode=memory&cache=shared", t.Name())

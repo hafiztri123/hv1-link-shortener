@@ -13,9 +13,9 @@ import (
 )
 
 type Server struct {
-	db         DB
-	redis      *redis.Client
-	urlService url.URLService
+	db          DB
+	redis       *redis.Client
+	urlService  url.URLService
 	userService user.UserService
 }
 

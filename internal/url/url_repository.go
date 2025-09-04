@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-
 type URLRepository interface {
 	FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error)
 	GetByID(ctx context.Context, id int64) (*URL, error)

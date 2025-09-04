@@ -28,8 +28,6 @@ type mockURLService struct {
 
 type mockUserService struct {
 	err error
-
-
 }
 
 func (m *mockDB) Ping() error {
@@ -54,7 +52,6 @@ func (m *mockUserService) Register(ctx context.Context, req user.RegisterRequest
 func (m *mockUserService) Login(ctx context.Context, req user.LoginRequest) error {
 	return m.err
 }
-
 
 func TestHandleCreateURL(t *testing.T) {
 	testCases := []struct {
@@ -249,63 +246,62 @@ func TestHealthCheck(t *testing.T) {
 
 }
 
-func TestRegister (t *testing.T) {
+func TestRegister(t *testing.T) {
 	validRequestBody := `{"email": "example@mail.com", "password": "example"}`
 	testCases := []struct {
-		name string
-		input string
-		registerErr error
+		name           string
+		input          string
+		registerErr    error
 		wantStatusCode int
 	}{
 		{
-			name: "success",
-			input: validRequestBody,
-			registerErr: nil,
+			name:           "success",
+			input:          validRequestBody,
+			registerErr:    nil,
 			wantStatusCode: http.StatusCreated,
 		},
 
 		{
-			name: "bad request payload",
-			input: `{"invalid": "invalid}`,
-			registerErr: nil,
+			name:           "bad request payload",
+			input:          `{"invalid": "invalid}`,
+			registerErr:    nil,
 			wantStatusCode: http.StatusBadRequest,
 		},
 
 		{
-			name: "invalid credentials",
-			input: validRequestBody,
-			registerErr: user.InvalidCredentials,
+			name:           "invalid credentials",
+			input:          validRequestBody,
+			registerErr:    user.InvalidCredentials,
 			wantStatusCode: http.StatusUnauthorized,
 		},
 
 		{
-			name: "user not found",
-			input: validRequestBody,
-			registerErr: user.UserNotFound,
+			name:           "user not found",
+			input:          validRequestBody,
+			registerErr:    user.UserNotFound,
 			wantStatusCode: http.StatusNotFound,
 		},
 
 		{
-			name: "email alredy exists",
-			input: validRequestBody,
-			registerErr: user.EmailAlreadyExists,
+			name:           "email alredy exists",
+			input:          validRequestBody,
+			registerErr:    user.EmailAlreadyExists,
 			wantStatusCode: http.StatusConflict,
 		},
 
 		{
-			name :"unexpected error",
-			input: validRequestBody,
-			registerErr: user.UnexpectedError,
+			name:           "unexpected error",
+			input:          validRequestBody,
+			registerErr:    user.UnexpectedError,
 			wantStatusCode: http.StatusInternalServerError,
 		},
 
 		{
-			name: "internal server error",
-			input: validRequestBody,
-			registerErr: errors.New("example"),
+			name:           "internal server error",
+			input:          validRequestBody,
+			registerErr:    errors.New("example"),
 			wantStatusCode: http.StatusInternalServerError,
 		},
-
 	}
 
 	for _, tc := range testCases {
@@ -324,55 +320,52 @@ func TestRegister (t *testing.T) {
 
 			assert.Equal(t, tc.wantStatusCode, rr.Code)
 
-
-
 		})
 	}
 }
 
-func TestLogin (t *testing.T) {
+func TestLogin(t *testing.T) {
 	validRequestBody := `{"email": "example@mail.com", "password": "example"}`
 	testCases := []struct {
-		name string
-		input string
-		registerErr error
+		name           string
+		input          string
+		registerErr    error
 		wantStatusCode int
 	}{
 		{
-			name: "success",
-			input: validRequestBody,
-			registerErr: nil,
+			name:           "success",
+			input:          validRequestBody,
+			registerErr:    nil,
 			wantStatusCode: http.StatusOK,
 		},
 
 		{
-			name: "bad request payload",
-			input: `{"invalid": "invalid}`,
-			registerErr: nil,
+			name:           "bad request payload",
+			input:          `{"invalid": "invalid}`,
+			registerErr:    nil,
 			wantStatusCode: http.StatusBadRequest,
 		},
 
 		{
-			name: "invalid credentials",
-			input: validRequestBody,
-			registerErr: user.InvalidCredentials,
+			name:           "invalid credentials",
+			input:          validRequestBody,
+			registerErr:    user.InvalidCredentials,
 			wantStatusCode: http.StatusUnauthorized,
 		},
 
 		{
-			name :"unexpected error",
-			input: validRequestBody,
-			registerErr: user.UnexpectedError,
+			name:           "unexpected error",
+			input:          validRequestBody,
+			registerErr:    user.UnexpectedError,
 			wantStatusCode: http.StatusInternalServerError,
 		},
 
 		{
-			name: "internal server error",
-			input: validRequestBody,
-			registerErr: errors.New("example"),
+			name:           "internal server error",
+			input:          validRequestBody,
+			registerErr:    errors.New("example"),
 			wantStatusCode: http.StatusInternalServerError,
 		},
-
 	}
 
 	for _, tc := range testCases {
@@ -390,8 +383,6 @@ func TestLogin (t *testing.T) {
 			server.handleLogin(rr, rrl)
 
 			assert.Equal(t, tc.wantStatusCode, rr.Code)
-
-
 
 		})
 	}

@@ -6,31 +6,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 func TestErrors(t *testing.T) {
-	testCases := []struct{
-		name string
-		err error
+	testCases := []struct {
+		name        string
+		err         error
 		wantErrBody string
 	}{
 		{
-			name: "Email already exists",
-			err: EmailAlreadyExists,
+			name:        "Email already exists",
+			err:         EmailAlreadyExists,
 			wantErrBody: "Email already exists",
 		},
 		{
-			name: "User not found",
-			err: UserNotFound,
+			name:        "User not found",
+			err:         UserNotFound,
 			wantErrBody: "User not found",
 		},
 		{
-			name: "Invalid credentials",
-			err: InvalidCredentials,
+			name:        "Invalid credentials",
+			err:         InvalidCredentials,
 			wantErrBody: "Invalid credentials",
 		},
 		{
-			name: "Unexpected error",
-			err: UnexpectedError,
+			name:        "Unexpected error",
+			err:         UnexpectedError,
 			wantErrBody: "Unexpected error has occured",
 		},
 	}

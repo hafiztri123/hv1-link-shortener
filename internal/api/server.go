@@ -13,4 +13,3 @@ type DB interface {
 type Redis interface {
 	Ping(ctx context.Context) *redis.StatusCmd
 }
-

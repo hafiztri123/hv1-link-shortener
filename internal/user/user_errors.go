@@ -11,11 +11,10 @@ type EmailAlreadyExistsErr struct {
 	email string
 }
 
-func (e *EmailAlreadyExistsErr)  Error() string {
+func (e *EmailAlreadyExistsErr) Error() string {
 	slog.Error("Email already exists", "email", e.email)
 	return "Email already exists"
 }
-
 
 type UserNotFoundErr struct {
 	email string
@@ -26,7 +25,7 @@ func (e *UserNotFoundErr) Error() string {
 	return "User not found"
 }
 
-type InvalidCredentialErr struct {}
+type InvalidCredentialErr struct{}
 
 func (e *InvalidCredentialErr) Error() string {
 	slog.Error("Password not matched with existing user")
@@ -35,10 +34,10 @@ func (e *InvalidCredentialErr) Error() string {
 
 type UnexpectedErr struct {
 	action string
-	err error
+	err    error
 }
 
 func (e *UnexpectedErr) Error() string {
-	slog.Error("unexpected error has occured","action", e.action, "error", e.err)
+	slog.Error("unexpected error has occured", "action", e.action, "error", e.err)
 	return "Unexpected error has occured"
 }

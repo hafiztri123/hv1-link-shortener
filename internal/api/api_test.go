@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"hafiztri123/app-link-shortener/internal/user"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,10 +27,7 @@ type mockURLService struct {
 }
 
 type mockUserService struct {
-	createResult string
-	createError  error
-	FetchResult  string
-	FetchError   error
+	err error
 
 
 }
@@ -47,6 +45,14 @@ func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) (s
 
 func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
 	return m.FetchResult, m.FetchError
+}
+
+func (m *mockUserService) Register(ctx context.Context, req user.CreateUserRequest) error {
+	return m.err
+}
+
+func (m *mockUserService) Login(ctx context.Context, req user.UserLoginRequest) error {
+	return m.err
 }
 
 

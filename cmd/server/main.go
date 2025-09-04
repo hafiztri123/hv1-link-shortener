@@ -7,6 +7,7 @@ import (
 	"hafiztri123/app-link-shortener/internal/database"
 	"hafiztri123/app-link-shortener/internal/redis"
 	"hafiztri123/app-link-shortener/internal/url"
+	"hafiztri123/app-link-shortener/internal/user"
 	"log/slog"
 	"net/http"
 	"os"
@@ -44,7 +45,10 @@ func main() {
 	urlRepo := url.NewRepository(db)
 	urlService := url.NewService(urlRepo, redis, cfg.IDOffset)
 
-	server := api.NewServer(db, redis, urlService)
+	userRepo := user.NewRepository(db)
+	userService := user.NewService(db, userRepo)
+
+	server := api.NewServer(db, redis, urlService, userService)
 	router := server.RegisterRoutes()
 
 	defer db.Close()

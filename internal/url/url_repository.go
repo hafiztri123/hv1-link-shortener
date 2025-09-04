@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"hafiztri123/app-link-shortener/internal/utils"
 	"log/slog"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-const PG_UNIQUE_CONSRAINT_VIOLATION_CODE = "23505"
 
 type URLRepository interface {
 	FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error)
@@ -63,7 +63,7 @@ func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, 
 
 	if err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == PG_UNIQUE_CONSRAINT_VIOLATION_CODE {
+		if errors.As(err, &pgErr) && pgErr.Code == utils.PG_UNIQUE_CONSRAINT_VIOLATION_CODE {
 			tx.Rollback()
 			var existingShortCode string
 			err = r.DB.QueryRowContext(ctx, `SELECT short_code FROM urls WHERE long_url = $1`, longURL).Scan(&existingShortCode)

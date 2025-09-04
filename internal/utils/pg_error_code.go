@@ -1,0 +1,4 @@
+package utils
+
+
+const PG_UNIQUE_CONSRAINT_VIOLATION_CODE = "23505"

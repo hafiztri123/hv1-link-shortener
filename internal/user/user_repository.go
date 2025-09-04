@@ -11,6 +11,13 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+type UserRepository interface {
+	Insert(ctx context.Context, email string, password string) error
+	GetByEmail(ctx context.Context, email string) (*User, error)
+
+
+}
+
 type Repository struct {
 	db *sql.DB
 }
@@ -35,4 +42,28 @@ func (r *Repository) Insert(ctx context.Context, email string, password string) 
 		return err
 	}
 	return nil
+}
+
+func (r *Repository) GetByEmail(ctx context.Context, email string) (*User, error) {
+	getQuery := `SELECT id, email, password, created_at FROM users WHERE email = $1`
+
+	var user User
+
+	err := r.db.QueryRowContext(ctx, getQuery).Scan(
+		&user.Id,
+		&user.Email,
+		&user.Password,
+		&user.Created_at,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, &UserNotFoundErr{email: email}
+
+		}
+
+		return nil, err
+	}
+
+	return &user, nil
 }

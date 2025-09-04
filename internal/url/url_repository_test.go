@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3" // Driver for in-memory SQLite
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	_ "hafiztri123/app-link-shortener/internal/utils"
 )
 
 func setupTestDB(t *testing.T) *sql.DB {

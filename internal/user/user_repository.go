@@ -49,7 +49,7 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (*User, error
 
 	var user User
 
-	err := r.db.QueryRowContext(ctx, getQuery).Scan(
+	err := r.db.QueryRowContext(ctx, getQuery, email).Scan(
 		&user.Id,
 		&user.Email,
 		&user.Password,

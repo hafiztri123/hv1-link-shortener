@@ -2,6 +2,11 @@ package user
 
 import "log/slog"
 
+var EmailAlreadyExists = &EmailAlreadyExistsErr{}
+var UserNotFound = &UserNotFoundErr{}
+var InvalidCredentials = &InvalidCredentialErr{}
+var UnexpectedError = &UnexpectedErr{}
+
 type EmailAlreadyExistsErr struct {
 	email string
 }

@@ -2,6 +2,8 @@ package api
 
 import (
 	"hafiztri123/app-link-shortener/internal/metrics"
+	"hafiztri123/app-link-shortener/internal/url"
+	"hafiztri123/app-link-shortener/internal/user"
 	"net/http"
 	"time"
 
@@ -11,13 +13,14 @@ import (
 )
 
 type Server struct {
-	db         DB
-	redis      *redis.Client
-	urlService URLService
+	db          DB
+	redis       *redis.Client
+	urlService  url.URLService
+	userService user.UserService
 }
 
-func NewServer(db DB, redis *redis.Client, urlService URLService) *Server {
-	return &Server{db: db, redis: redis, urlService: urlService}
+func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService) *Server {
+	return &Server{db: db, redis: redis, urlService: urlService, userService: userService}
 }
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -31,6 +34,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 		v1.Get("/health", s.healthCheckHandler)
 		v1.Post("/url/shorten", s.handleCreateURL)
 		v1.Get("/url/{shortCode}", s.handleFetchURL)
+		v1.Post("/user/register", s.handleRegister)
+		v1.Post("/user/login", s.handleLogin)
 		v1.Handle("/metrics", promhttp.Handler())
 	})
 

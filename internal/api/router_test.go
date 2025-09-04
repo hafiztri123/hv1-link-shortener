@@ -7,9 +7,7 @@ import (
 )
 
 func TestNewServerAndRegisterRoutes(t *testing.T) {
-	mockService := &mockURLService{}
-
-	server := NewServer(nil, nil, mockService)
+	server := NewServer(nil, nil, nil, nil)
 	router := server.RegisterRoutes()
 
 	assert.NotNil(t, server, "New server should not be nil")

@@ -32,6 +32,10 @@ migrate-down:
 migrate-force:
 	@migrate -database "$(DATABASE_URL)" -path migrations force $(v)
 
+migrate-create:
+	@migrate create -ext sql -dir ./migrations -seq $(v)
+
+
 test-setup:
 	@migrate -database "$(DATABASE_URL_TEST)" -path migrations down -all
 	@migrate -database "$(DATABASE_URL_TEST)" -path migrations up

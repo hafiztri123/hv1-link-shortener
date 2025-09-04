@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"hafiztri123/app-link-shortener/internal/user"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,6 +26,10 @@ type mockURLService struct {
 	FetchError   error
 }
 
+type mockUserService struct {
+	err error
+}
+
 func (m *mockDB) Ping() error {
 	if m.ShouldFail {
 		return errors.New("FAIL: unable to ping mock database")
@@ -38,6 +43,14 @@ func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) (s
 
 func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
 	return m.FetchResult, m.FetchError
+}
+
+func (m *mockUserService) Register(ctx context.Context, req user.RegisterRequest) error {
+	return m.err
+}
+
+func (m *mockUserService) Login(ctx context.Context, req user.LoginRequest) error {
+	return m.err
 }
 
 func TestHandleCreateURL(t *testing.T) {
@@ -231,4 +244,146 @@ func TestHealthCheck(t *testing.T) {
 		})
 	}
 
+}
+
+func TestRegister(t *testing.T) {
+	validRequestBody := `{"email": "example@mail.com", "password": "example"}`
+	testCases := []struct {
+		name           string
+		input          string
+		registerErr    error
+		wantStatusCode int
+	}{
+		{
+			name:           "success",
+			input:          validRequestBody,
+			registerErr:    nil,
+			wantStatusCode: http.StatusCreated,
+		},
+
+		{
+			name:           "bad request payload",
+			input:          `{"invalid": "invalid}`,
+			registerErr:    nil,
+			wantStatusCode: http.StatusBadRequest,
+		},
+
+		{
+			name:           "invalid credentials",
+			input:          validRequestBody,
+			registerErr:    user.InvalidCredentials,
+			wantStatusCode: http.StatusUnauthorized,
+		},
+
+		{
+			name:           "user not found",
+			input:          validRequestBody,
+			registerErr:    user.UserNotFound,
+			wantStatusCode: http.StatusNotFound,
+		},
+
+		{
+			name:           "email alredy exists",
+			input:          validRequestBody,
+			registerErr:    user.EmailAlreadyExists,
+			wantStatusCode: http.StatusConflict,
+		},
+
+		{
+			name:           "unexpected error",
+			input:          validRequestBody,
+			registerErr:    user.UnexpectedError,
+			wantStatusCode: http.StatusInternalServerError,
+		},
+
+		{
+			name:           "internal server error",
+			input:          validRequestBody,
+			registerErr:    errors.New("example"),
+			wantStatusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &Server{
+				userService: &mockUserService{
+					err: tc.registerErr,
+				},
+			}
+
+			requestBody := []byte(tc.input)
+
+			rrl := httptest.NewRequest(http.MethodPost, "/api/v1/user/register", bytes.NewBuffer(requestBody))
+			rr := httptest.NewRecorder()
+			server.handleRegister(rr, rrl)
+
+			assert.Equal(t, tc.wantStatusCode, rr.Code)
+
+		})
+	}
+}
+
+func TestLogin(t *testing.T) {
+	validRequestBody := `{"email": "example@mail.com", "password": "example"}`
+	testCases := []struct {
+		name           string
+		input          string
+		registerErr    error
+		wantStatusCode int
+	}{
+		{
+			name:           "success",
+			input:          validRequestBody,
+			registerErr:    nil,
+			wantStatusCode: http.StatusOK,
+		},
+
+		{
+			name:           "bad request payload",
+			input:          `{"invalid": "invalid}`,
+			registerErr:    nil,
+			wantStatusCode: http.StatusBadRequest,
+		},
+
+		{
+			name:           "invalid credentials",
+			input:          validRequestBody,
+			registerErr:    user.InvalidCredentials,
+			wantStatusCode: http.StatusUnauthorized,
+		},
+
+		{
+			name:           "unexpected error",
+			input:          validRequestBody,
+			registerErr:    user.UnexpectedError,
+			wantStatusCode: http.StatusInternalServerError,
+		},
+
+		{
+			name:           "internal server error",
+			input:          validRequestBody,
+			registerErr:    errors.New("example"),
+			wantStatusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &Server{
+				userService: &mockUserService{
+					err: tc.registerErr,
+				},
+			}
+
+			requestBody := []byte(tc.input)
+
+			rrl := httptest.NewRequest(http.MethodPost, "/api/v1/user/login", bytes.NewBuffer(requestBody))
+			rr := httptest.NewRecorder()
+			server.handleLogin(rr, rrl)
+
+			assert.Equal(t, tc.wantStatusCode, rr.Code)
+
+		})
+	}
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hafiztri123/app-link-shortener/internal/response"
 	"hafiztri123/app-link-shortener/internal/url"
+	"hafiztri123/app-link-shortener/internal/user"
 	"hafiztri123/app-link-shortener/internal/utils"
 	"log"
 	"net/http"
@@ -92,5 +93,59 @@ func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, longURL, http.StatusMovedPermanently)
+}
 
+func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
+	var req user.RegisterRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid request payload")
+	}
+
+	err = s.userService.Register(r.Context(), req)
+	if err != nil {
+		switch err.(type) {
+		case *user.InvalidCredentialErr:
+			response.Error(w, http.StatusUnauthorized, err.Error())
+			return
+		case *user.UserNotFoundErr:
+			response.Error(w, http.StatusNotFound, err.Error())
+			return
+		case *user.EmailAlreadyExistsErr:
+			response.Error(w, http.StatusConflict, err.Error())
+		case *user.UnexpectedErr:
+			response.Error(w, http.StatusInternalServerError, err.Error())
+		default:
+			response.Error(w, http.StatusInternalServerError, "Something has occured, please try again later")
+			return
+		}
+	}
+
+	response.Success(w, "Account created", http.StatusCreated)
+}
+
+func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+	var req user.LoginRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid request payload")
+	}
+
+	err = s.userService.Login(r.Context(), req)
+	if err != nil {
+		switch err.(type) {
+		case *user.InvalidCredentialErr:
+			response.Error(w, http.StatusUnauthorized, err.Error())
+			return
+		case *user.UnexpectedErr:
+			response.Error(w, http.StatusInternalServerError, err.Error())
+			return
+		default:
+			response.Error(w, http.StatusInternalServerError, "something has occured, please try again later")
+			return
+
+		}
+	}
+
+	response.Success(w, "Success", http.StatusOK)
 }

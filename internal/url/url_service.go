@@ -8,6 +8,11 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+type URLService interface {
+	CreateShortCode(ctx context.Context, longURL string) (string, error)
+	FetchLongURL(ctx context.Context, shortCode string) (string, error)
+}
+
 type Service struct {
 	repo     URLRepository
 	redis    *redis.Client

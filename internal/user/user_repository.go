@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"hafiztri123/app-link-shortener/internal/utils"
+
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -27,7 +29,7 @@ func (r *Repository) Insert(ctx context.Context, email string, password string) 
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == utils.PG_UNIQUE_CONSRAINT_VIOLATION_CODE {
-			return err
+			return &EmailAlreadyExistsErr{email: email}
 		}
 
 		return err

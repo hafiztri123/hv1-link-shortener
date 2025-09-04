@@ -58,7 +58,7 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (*User, error
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, &UserNotFoundErr{email: email}
+			return nil, &InvalidCredentialErr{}
 
 		}
 

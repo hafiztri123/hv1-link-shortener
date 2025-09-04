@@ -25,6 +25,15 @@ type mockURLService struct {
 	FetchError   error
 }
 
+type mockUserService struct {
+	createResult string
+	createError  error
+	FetchResult  string
+	FetchError   error
+
+
+}
+
 func (m *mockDB) Ping() error {
 	if m.ShouldFail {
 		return errors.New("FAIL: unable to ping mock database")
@@ -39,6 +48,7 @@ func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) (s
 func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
 	return m.FetchResult, m.FetchError
 }
+
 
 func TestHandleCreateURL(t *testing.T) {
 	testCases := []struct {

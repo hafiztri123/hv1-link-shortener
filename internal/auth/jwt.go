@@ -7,8 +7,8 @@ import (
 )
 
 type Claims struct {
-	UserID int64 `json:"user_id"`
-	Email string `json:"email"`
+	UserID int64  `json:"user_id"`
+	Email  string `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -28,7 +28,7 @@ func (ts *TokenService) GenerateToken(userID int64, email string) (string, error
 		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt: jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}

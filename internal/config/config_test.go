@@ -12,6 +12,7 @@ func TestLoad(t *testing.T) {
 		t.Setenv("DATABASE_URL", "test_db_url")
 		t.Setenv("REDIS_URL", "test_redis_url")
 		t.Setenv("ID_OFFSET", "123")
+		t.Setenv("JWT_SECRET", "jwt_secret")
 
 		cfg, err := Load()
 

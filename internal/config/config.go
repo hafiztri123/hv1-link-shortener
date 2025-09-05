@@ -11,6 +11,7 @@ type Config struct {
 	DatabaseURL string
 	RedisURL    string
 	IDOffset    uint64
+	SecretKey   string
 }
 
 func Load() (*Config, error) {
@@ -31,6 +32,11 @@ func Load() (*Config, error) {
 		errors = append(errors, "ID_OFFSET Environment variable not set")
 	}
 
+	jwt, ok := os.LookupEnv("JWT_SECRET")
+	if !ok {
+		errors = append(errors, "JWT_SECRET Envvironment variable not set")
+	}
+
 	convertedIdOffset, err := strconv.ParseUint(idOffset, 10, 64)
 	if err != nil {
 		errors = append(errors, fmt.Sprintf("Failed to parse ID_OFFSET: %v", err))
@@ -45,6 +51,7 @@ func Load() (*Config, error) {
 		DatabaseURL: dbURL,
 		RedisURL:    redisURL,
 		IDOffset:    convertedIdOffset,
+		SecretKey:   jwt,
 	}, nil
 
 }

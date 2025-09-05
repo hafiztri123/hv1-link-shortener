@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/response"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
@@ -18,9 +19,10 @@ import (
 )
 
 type Handler interface {
-	healthCheckHandler(w http.ResponseWriter, r *http.Request)
-	handleCreateURL(w http.ResponseWriter, r *http.Request)
-	handleFetchURL(w http.ResponseWriter, r *http.Request)
+	healthCheckHandler(http.ResponseWriter,  *http.Request)
+	handleCreateURL(http.ResponseWriter,  *http.Request)
+	handleFetchURL(http.ResponseWriter,  *http.Request)
+	handleFetchUserURLHistory(http.ResponseWriter, *http.Request)
 }
 
 func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -149,3 +151,24 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	response.Success(w, "Success", http.StatusOK)
 }
+
+func (s *Server) handleFetchUserURLHistory(w http.ResponseWriter, r *http.Request) {
+	claims, err := auth.GetUserFromContext(r.Context())
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, "not authorized")
+		return
+	}
+
+	urls, err := s.urlService.FetchUserURLHistory(r.Context(), claims.UserID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Unexpected error has occured, please try again later")
+		return
+	}
+
+	response.Success(w, "success fetching user url history", http.StatusOK, response.ListResponse[*url.URL]{
+		Data: urls,
+		Count: len(urls),
+	})
+}
+
+

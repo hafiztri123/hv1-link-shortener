@@ -11,8 +11,9 @@ import (
 )
 
 type URLRepository interface {
-	FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error)
-	GetByID(ctx context.Context, id int64) (*URL, error)
+	FindOrCreateShortCode(context.Context,  string,  uint64) (string, error)
+	GetByID(context.Context, int64) (*URL, error)
+	GetByUserIDBulk(context.Context, int64) ([]*URL, error)
 }
 
 type Repository struct {
@@ -35,6 +36,37 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*URL, error) {
 	}
 
 	return &url, nil
+}
+
+func (r *Repository) GetByUserIDBulk(ctx context.Context, userId int64) ([]*URL, error) {
+	fetchQuery := `SELECT id, short_code, long_url, created_at FROM urls WHERE user_id = $1`
+
+	rows, err := r.DB.QueryContext(ctx, fetchQuery, userId)
+	if err != nil {
+		slog.Error("database operation error occured", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []*URL
+
+	for rows.Next() {
+		var url URL
+
+		err := rows.Scan(&url.ID, &url.ShortCode, &url.LongURL, &url.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		urls = append(urls, &url)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return urls, nil
+
 }
 
 func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error) {

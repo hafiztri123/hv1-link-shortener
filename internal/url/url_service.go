@@ -9,8 +9,9 @@ import (
 )
 
 type URLService interface {
-	CreateShortCode(ctx context.Context, longURL string) (string, error)
-	FetchLongURL(ctx context.Context, shortCode string) (string, error)
+	CreateShortCode(context.Context,  string) (string, error)
+	FetchLongURL(context.Context, string) (string, error)
+	FetchUserURLHistory (context.Context,  int64) ([]*URL, error)
 }
 
 type Service struct {
@@ -86,6 +87,18 @@ func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, e
 			}
 		}
 	}
+
+}
+
+func (s *Service) FetchUserURLHistory (ctx context.Context, userId int64) ([]*URL, error) {
+
+	urls, err := s.repo.GetByUserIDBulk(ctx, userId) 
+
+	if err != nil {
+		return nil, err
+	}
+
+	return urls, nil
 
 }
 

@@ -18,7 +18,7 @@ func TestInsertIntegration(t *testing.T) {
 	repo := url.NewRepository(db)
 
 	idOffset := 1000
-	shortCode, err := repo.FindOrCreateShortCode(ctx, "https://example.com", uint64(idOffset))
+	shortCode, err := repo.FindOrCreateShortCode(ctx, "https://example.com", uint64(idOffset), nil)
 	require.NoError(t, err)
 
 	id := url.FromBase62(shortCode) - uint64(idOffset)

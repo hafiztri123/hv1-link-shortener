@@ -41,7 +41,7 @@ func (m *mockDB) Ping() error {
 	return nil
 }
 
-func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) (string, error) {
+func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string, userId *int64) (string, error) {
 	return m.createResult, m.createError
 }
 

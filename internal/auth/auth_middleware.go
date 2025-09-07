@@ -41,3 +41,31 @@ func AuthMiddleware(ts *TokenService) func(http.Handler) http.Handler {
 		})
 	}
 }
+
+func PermissiveAuthMiddleware(ts *TokenService) func(http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				h.ServeHTTP(w, r)
+				return
+			}
+
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+			//Authorization must have the prefix "Bearer"
+			if tokenString == authHeader {
+				h.ServeHTTP(w, r)
+				return
+			}
+
+			claims, err := ts.ValidateToken(tokenString)
+			if err != nil {
+				h.ServeHTTP(w, r)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), UserContextKey, claims)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}

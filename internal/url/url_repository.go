@@ -11,7 +11,7 @@ import (
 )
 
 type URLRepository interface {
-	FindOrCreateShortCode(context.Context, string, uint64) (string, error)
+	FindOrCreateShortCode(context.Context, string, uint64, *int64, ) (string, error)
 	GetByID(context.Context, int64) (*URL, error)
 	GetByUserIDBulk(context.Context, int64) ([]*URL, error)
 }
@@ -69,7 +69,7 @@ func (r *Repository) GetByUserIDBulk(ctx context.Context, userId int64) ([]*URL,
 
 }
 
-func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error) {
+func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64, userId *int64) (string, error) {
 	tx, err := r.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		slog.Error("Failed to begin transaction", "error", err)
@@ -79,7 +79,7 @@ func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, 
 	defer tx.Rollback()
 
 	var shortCode sql.NullString
-	err = tx.QueryRowContext(ctx, `SELECT short_code FROM urls WHERE long_url = $1`, longURL).Scan(&shortCode)
+	err = tx.QueryRowContext(ctx, `SELECT short_code FROM urls WHERE long_url = $1 AND user_id IS NOT DISTINCT FROM $2`, longURL, userId).Scan(&shortCode)
 
 	if err == nil && shortCode.Valid {
 		return shortCode.String, nil
@@ -90,7 +90,7 @@ func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, 
 	}
 
 	var id int64
-	err = tx.QueryRowContext(ctx, `INSERT INTO urls (long_url) VALUES ($1) RETURNING id`, longURL).Scan(&id)
+	err = tx.QueryRowContext(ctx, `INSERT INTO urls (long_url, user_id) VALUES ($1, $2) RETURNING id`, longURL, userId).Scan(&id)
 
 	if err != nil {
 		var pgErr *pgconn.PgError

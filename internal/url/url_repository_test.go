@@ -43,11 +43,11 @@ func TestRepository_IntegrationFlow(t *testing.T) {
 
 	longURL := "https://www.google.com/search?q=golang-testing"
 
-	shortCode1, err := repo.FindOrCreateShortCode(ctx, longURL, 1000)
+	shortCode1, err := repo.FindOrCreateShortCode(ctx, longURL, 1000, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, shortCode1)
 
-	shortCode2, err := repo.FindOrCreateShortCode(ctx, longURL, 1000)
+	shortCode2, err := repo.FindOrCreateShortCode(ctx, longURL, 1000, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, shortCode1, shortCode2, "Expected: %s, Actual: %s", shortCode1, shortCode2)
 

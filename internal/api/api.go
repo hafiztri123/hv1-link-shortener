@@ -49,6 +49,14 @@ func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 
+	var userId *int64
+
+	if claims, err := auth.GetUserFromContext(r.Context()); err == nil {
+		userId = &claims.UserID
+	}
+
+
+
 	var req url.CreateURLRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -68,7 +76,7 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortcode, err := s.urlService.CreateShortCode(r.Context(), req.LongURL)
+	shortcode, err := s.urlService.CreateShortCode(r.Context(), req.LongURL, userId)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to create short URL")
 		return

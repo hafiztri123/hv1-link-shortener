@@ -34,11 +34,15 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(metrics.PrometheusMiddleware)
 	r.Route("/api/v1", func(v1 chi.Router) {
 		v1.Get("/health", s.healthCheckHandler)
-		v1.Post("/url/shorten", s.handleCreateURL)
 		v1.Get("/url/{shortCode}", s.handleFetchURL)
 		v1.Post("/user/register", s.handleRegister)
 		v1.Post("/user/login", s.handleLogin)
 		v1.Handle("/metrics", promhttp.Handler())
+
+		v1.Route("/url", func(protected chi.Router) {
+			protected.Use(auth.PermissiveAuthMiddleware(s.tokenService))
+			protected.Post("/shorten", s.handleCreateURL)
+		})
 
 		v1.Route("/user", func(protected chi.Router) {
 			protected.Use(auth.AuthMiddleware(s.tokenService))

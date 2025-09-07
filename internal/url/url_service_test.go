@@ -15,7 +15,7 @@ type MockRepository struct {
 	InsertFunc                func(context.Context, string) (int64, error)
 	UpdateShortCodeFunc       func(context.Context, int64, string) error
 	GetByIDFunc               func(context.Context, int64) (*URL, error)
-	FindOrCreateShortCodeFunc func(context.Context, string, uint64) (string, error)
+	FindOrCreateShortCodeFunc func(context.Context, string, uint64, *int64) (string, error)
 	GetByUserIDBulkFunc       func(context.Context, int64) ([]*URL, error)
 }
 
@@ -31,8 +31,8 @@ func (m *MockRepository) GetByID(ctx context.Context, id int64) (*URL, error) {
 	return m.GetByIDFunc(ctx, id)
 }
 
-func (m *MockRepository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64) (string, error) {
-	return m.FindOrCreateShortCodeFunc(ctx, longURL, idOffset)
+func (m *MockRepository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64, userId *int64) (string, error) {
+	return m.FindOrCreateShortCodeFunc(ctx, longURL, idOffset, nil)
 }
 
 func (m *MockRepository) GetByUserIDBulk(ctx context.Context, userId int64) ([]*URL, error) {
@@ -51,7 +51,7 @@ func TestCreateShortcode(t *testing.T) {
 			name:    "success",
 			longUrl: "https://example.com/success",
 			setupMock: func(mock *MockRepository) {
-				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64) (string, error) {
+				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64, userId *int64 ) (string, error) {
 					return "success", nil
 				}
 			},
@@ -63,7 +63,7 @@ func TestCreateShortcode(t *testing.T) {
 			name:    "database error",
 			longUrl: "https://example.com/failure",
 			setupMock: func(mock *MockRepository) {
-				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64) (string, error) {
+				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64, userId *int64) (string, error) {
 					return "", errors.New("database error")
 				}
 			},
@@ -77,7 +77,7 @@ func TestCreateShortcode(t *testing.T) {
 			MockRepository := &MockRepository{}
 			tc.setupMock(MockRepository)
 			service := &Service{repo: MockRepository, idOffset: 1000}
-			got, err := service.CreateShortCode(context.Background(), tc.longUrl)
+			got, err := service.CreateShortCode(context.Background(), tc.longUrl, nil)
 
 			if tc.wantErr != nil {
 				assert.Error(t, err)

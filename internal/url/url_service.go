@@ -9,7 +9,7 @@ import (
 )
 
 type URLService interface {
-	CreateShortCode(context.Context, string) (string, error)
+	CreateShortCode(context.Context, string, *int64) (string, error)
 	FetchLongURL(context.Context, string) (string, error)
 	FetchUserURLHistory(context.Context, int64) ([]*URL, error)
 }
@@ -24,8 +24,8 @@ func NewService(repo URLRepository, redis *redis.Client, idOffset uint64) *Servi
 	return &Service{repo: repo, redis: redis, idOffset: idOffset}
 }
 
-func (s *Service) CreateShortCode(ctx context.Context, longURL string) (string, error) {
-	shortCode, err := s.repo.FindOrCreateShortCode(ctx, longURL, s.idOffset)
+func (s *Service) CreateShortCode(ctx context.Context, longURL string, userId *int64) (string, error) {
+	shortCode, err := s.repo.FindOrCreateShortCode(ctx, longURL, s.idOffset, userId)
 	if err != nil {
 		slog.Error("Failed to find or create short code", "error", err, "url", longURL)
 		return "", err

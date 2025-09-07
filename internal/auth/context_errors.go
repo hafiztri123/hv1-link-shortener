@@ -17,4 +17,3 @@ func (e *ValueNotFoundErr) Is(target error) bool {
 	_, ok := target.(*ValueNotFoundErr)
 	return ok
 }
-

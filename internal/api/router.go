@@ -1,6 +1,7 @@
 package api
 
 import (
+	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/metrics"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
@@ -13,14 +14,15 @@ import (
 )
 
 type Server struct {
-	db          DB
-	redis       *redis.Client
-	urlService  url.URLService
-	userService user.UserService
+	db           DB
+	redis        *redis.Client
+	urlService   url.URLService
+	userService  user.UserService
+	tokenService *auth.TokenService
 }
 
-func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService) *Server {
-	return &Server{db: db, redis: redis, urlService: urlService, userService: userService}
+func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService) *Server {
+	return &Server{db: db, redis: redis, urlService: urlService, userService: userService, tokenService: ts}
 }
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -37,6 +39,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 		v1.Post("/user/register", s.handleRegister)
 		v1.Post("/user/login", s.handleLogin)
 		v1.Handle("/metrics", promhttp.Handler())
+
+		v1.Route("/user", func(protected chi.Router) {
+			protected.Use(auth.AuthMiddleware(s.tokenService))
+			protected.Get("/history", s.handleFetchUserURLHistory)
+		})
 	})
 
 	return r

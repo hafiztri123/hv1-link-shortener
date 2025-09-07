@@ -19,9 +19,9 @@ import (
 )
 
 type Handler interface {
-	healthCheckHandler(http.ResponseWriter,  *http.Request)
-	handleCreateURL(http.ResponseWriter,  *http.Request)
-	handleFetchURL(http.ResponseWriter,  *http.Request)
+	healthCheckHandler(http.ResponseWriter, *http.Request)
+	handleCreateURL(http.ResponseWriter, *http.Request)
+	handleFetchURL(http.ResponseWriter, *http.Request)
 	handleFetchUserURLHistory(http.ResponseWriter, *http.Request)
 }
 
@@ -166,9 +166,7 @@ func (s *Server) handleFetchUserURLHistory(w http.ResponseWriter, r *http.Reques
 	}
 
 	response.Success(w, "success fetching user url history", http.StatusOK, response.ListResponse[*url.URL]{
-		Data: urls,
+		Data:  urls,
 		Count: len(urls),
 	})
 }
-
-

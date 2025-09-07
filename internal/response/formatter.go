@@ -1,6 +1,6 @@
 package response
 
 type ListResponse[T any] struct {
-	Data []T
+	Data  []T
 	Count int
 }

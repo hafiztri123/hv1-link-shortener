@@ -21,11 +21,11 @@ type mockDB struct {
 }
 
 type mockURLService struct {
-	createResult string
-	createError  error
-	FetchResult  string
-	FetchError   error
-	FetchListResult any
+	createResult         string
+	createError          error
+	FetchResult          string
+	FetchError           error
+	FetchListResult      any
 	FetchListResultError error
 }
 
@@ -48,7 +48,7 @@ func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (st
 	return m.FetchResult, m.FetchError
 }
 
-func (m *mockURLService) FetchUserURLHistory (ctx context.Context, userId int64) ([]*url.URL, error) {
+func (m *mockURLService) FetchUserURLHistory(ctx context.Context, userId int64) ([]*url.URL, error) {
 	return m.FetchListResult.([]*url.URL), m.FetchListResultError
 
 }

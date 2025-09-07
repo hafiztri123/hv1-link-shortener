@@ -11,7 +11,7 @@ import (
 )
 
 type URLRepository interface {
-	FindOrCreateShortCode(context.Context,  string,  uint64) (string, error)
+	FindOrCreateShortCode(context.Context, string, uint64) (string, error)
 	GetByID(context.Context, int64) (*URL, error)
 	GetByUserIDBulk(context.Context, int64) ([]*URL, error)
 }

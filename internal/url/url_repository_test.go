@@ -59,3 +59,7 @@ func TestRepository_IntegrationFlow(t *testing.T) {
 	require.True(t, retrievedURL.ShortCode.Valid)
 	require.Equal(t, shortCode1, retrievedURL.ShortCode.String)
 }
+
+func TestRepository_RegisteredUserFlow(t *testing.T) {
+
+}

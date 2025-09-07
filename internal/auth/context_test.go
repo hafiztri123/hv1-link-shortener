@@ -9,26 +9,25 @@ import (
 
 func TestGetUserFromContext(t *testing.T) {
 
-	testCases := []struct{
-		name string
-		claims *Claims
+	testCases := []struct {
+		name    string
+		claims  *Claims
 		wantErr error
 	}{
 		{
 			name: "success",
 			claims: &Claims{
 				UserID: 1,
-				Email: "example@mail.com",
+				Email:  "example@mail.com",
 			},
 			wantErr: nil,
 		},
 
 		{
-			name: "claims error",
-			claims: nil,
+			name:    "claims error",
+			claims:  nil,
 			wantErr: ValueNotFound,
 		},
-
 	}
 
 	for _, tc := range testCases {

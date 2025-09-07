@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"hafiztri123/app-link-shortener/internal/api"
+	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/config"
 	"hafiztri123/app-link-shortener/internal/database"
 	"hafiztri123/app-link-shortener/internal/redis"
@@ -48,7 +49,9 @@ func main() {
 	userRepo := user.NewRepository(db)
 	userService := user.NewService(db, userRepo)
 
-	server := api.NewServer(db, redis, urlService, userService)
+	tokenService := auth.NewTokenService(cfg.SecretKey)
+
+	server := api.NewServer(db, redis, urlService, userService, tokenService)
 	router := server.RegisterRoutes()
 
 	defer db.Close()

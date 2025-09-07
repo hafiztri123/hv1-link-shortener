@@ -12,13 +12,11 @@ import (
 )
 
 type MockRepository struct {
-	InsertFunc                func(context.Context,  string) (int64, error)
-	UpdateShortCodeFunc       func(context.Context,  int64, string) error
-	GetByIDFunc               func(context.Context,  int64) (*URL, error)
-	FindOrCreateShortCodeFunc func(context.Context,  string,  uint64) (string, error)
-	GetByUserIDBulkFunc func(context.Context, int64) ([]*URL, error)
-
-
+	InsertFunc                func(context.Context, string) (int64, error)
+	UpdateShortCodeFunc       func(context.Context, int64, string) error
+	GetByIDFunc               func(context.Context, int64) (*URL, error)
+	FindOrCreateShortCodeFunc func(context.Context, string, uint64) (string, error)
+	GetByUserIDBulkFunc       func(context.Context, int64) ([]*URL, error)
 }
 
 func (m *MockRepository) Insert(ctx context.Context, longURL string) (int64, error) {
@@ -39,7 +37,7 @@ func (m *MockRepository) FindOrCreateShortCode(ctx context.Context, longURL stri
 
 func (m *MockRepository) GetByUserIDBulk(ctx context.Context, userId int64) ([]*URL, error) {
 	return m.GetByUserIDBulkFunc(ctx, userId)
-} 
+}
 
 func TestCreateShortcode(t *testing.T) {
 	testCases := []struct {

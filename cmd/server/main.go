@@ -43,13 +43,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	tokenService := auth.NewTokenService(cfg.SecretKey)
+
+
 	urlRepo := url.NewRepository(db)
 	urlService := url.NewService(urlRepo, redis, cfg.IDOffset)
 
 	userRepo := user.NewRepository(db)
-	userService := user.NewService(db, userRepo)
+	userService := user.NewService(db, userRepo, tokenService)
 
-	tokenService := auth.NewTokenService(cfg.SecretKey)
 
 	server := api.NewServer(db, redis, urlService, userService, tokenService)
 	router := server.RegisterRoutes()

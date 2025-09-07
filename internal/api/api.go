@@ -133,7 +133,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "Invalid request payload")
 	}
 
-	err = s.userService.Login(r.Context(), req)
+	token, err := s.userService.Login(r.Context(), req)
 	if err != nil {
 		switch err.(type) {
 		case *user.InvalidCredentialErr:
@@ -149,7 +149,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response.Success(w, "Success", http.StatusOK)
+	response.Success(w, "Success", http.StatusOK, user.LoginResponse{Token: token} )
 }
 
 func (s *Server) handleFetchUserURLHistory(w http.ResponseWriter, r *http.Request) {

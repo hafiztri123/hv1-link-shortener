@@ -30,6 +30,7 @@ type mockURLService struct {
 }
 
 type mockUserService struct {
+	token string
 	err error
 }
 
@@ -57,8 +58,8 @@ func (m *mockUserService) Register(ctx context.Context, req user.RegisterRequest
 	return m.err
 }
 
-func (m *mockUserService) Login(ctx context.Context, req user.LoginRequest) error {
-	return m.err
+func (m *mockUserService) Login(ctx context.Context, req user.LoginRequest) (string, error) {
+	return m.token ,m.err
 }
 
 func TestHandleCreateURL(t *testing.T) {
@@ -337,12 +338,14 @@ func TestLogin(t *testing.T) {
 	testCases := []struct {
 		name           string
 		input          string
+		token string
 		registerErr    error
 		wantStatusCode int
 	}{
 		{
 			name:           "success",
 			input:          validRequestBody,
+			token:          "token",
 			registerErr:    nil,
 			wantStatusCode: http.StatusOK,
 		},
@@ -350,6 +353,7 @@ func TestLogin(t *testing.T) {
 		{
 			name:           "bad request payload",
 			input:          `{"invalid": "invalid}`,
+			token:          "",
 			registerErr:    nil,
 			wantStatusCode: http.StatusBadRequest,
 		},
@@ -380,6 +384,7 @@ func TestLogin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			server := &Server{
 				userService: &mockUserService{
+					token: tc.token,
 					err: tc.registerErr,
 				},
 			}
@@ -391,6 +396,9 @@ func TestLogin(t *testing.T) {
 			server.handleLogin(rr, rrl)
 
 			assert.Equal(t, tc.wantStatusCode, rr.Code)
+			if tc.wantStatusCode == http.StatusOK {
+				assert.Contains(t, rr.Body.String(), tc.token)
+			}
 
 		})
 	}

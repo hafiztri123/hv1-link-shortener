@@ -1,53 +1,33 @@
 package url
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
 	"testing"
+
+	"hafiztri123/app-link-shortener/internal/auth"
+	"hafiztri123/app-link-shortener/internal/user"
+	_ "hafiztri123/app-link-shortener/internal/utils"
+	"hafiztri123/app-link-shortener/migrations"
 
 	_ "github.com/mattn/go-sqlite3" // Driver for in-memory SQLite
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	_ "hafiztri123/app-link-shortener/internal/utils"
 )
 
-func setupTestDB(t *testing.T) *sql.DB {
-	dsn := fmt.Sprintf("file:%s?mode=memory&cache=shared", t.Name())
-	db, err := sql.Open("sqlite3_proxy", dsn)
-	require.NoError(t, err)
-
-	createTableSQL := `
-		CREATE TABLE urls (
-			id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-			short_code TEXT,
-			long_url TEXT UNIQUE NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		);
-	`
-
-	_, err = db.ExecContext(context.Background(), createTableSQL)
-	require.NoError(t, err)
+func TestRepository_IntegrationFlow(t *testing.T) {
+	db, ctx := migrations.SetupTestDB(t)
+	repo := NewRepository(db)
 
 	t.Cleanup(func() {
-		db.Close()
+		require.NoError(t, db.Close())
 	})
-
-	return db
-}
-
-func TestRepository_IntegrationFlow(t *testing.T) {
-	db := setupTestDB(t)
-	repo := NewRepository(db)
-	ctx := context.Background()
 
 	longURL := "https://www.google.com/search?q=golang-testing"
 
-	shortCode1, err := repo.FindOrCreateShortCode(ctx, longURL, 1000)
+	shortCode1, err := repo.FindOrCreateShortCode(ctx, longURL, 1000, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, shortCode1)
 
-	shortCode2, err := repo.FindOrCreateShortCode(ctx, longURL, 1000)
+	shortCode2, err := repo.FindOrCreateShortCode(ctx, longURL, 1000, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, shortCode1, shortCode2, "Expected: %s, Actual: %s", shortCode1, shortCode2)
 
@@ -58,4 +38,48 @@ func TestRepository_IntegrationFlow(t *testing.T) {
 	require.Equal(t, longURL, retrievedURL.LongURL)
 	require.True(t, retrievedURL.ShortCode.Valid)
 	require.Equal(t, shortCode1, retrievedURL.ShortCode.String)
+}
+
+func TestRepository_FetchHistoryURL(t *testing.T) {
+	db, ctx := migrations.SetupTestDB(t)
+	repo := NewRepository(db)
+	userId := int64(1)
+
+	t.Cleanup(func() {
+		require.NoError(t, db.Close())
+	})
+
+	tokenService := auth.NewTokenService("secret")
+
+	userService := user.NewService(db, user.NewRepository(db), tokenService)
+
+	err := userService.Register(ctx, user.RegisterRequest{
+		Email:    "test",
+		Password: "password",
+	})
+	token, err := userService.Login(ctx, user.LoginRequest{
+		Email:    "test",
+		Password: "password",
+	})
+
+	assert.NoError(t, err)
+
+	claims, err := tokenService.ValidateToken(token)
+	assert.NoError(t, err)
+	userId = claims.UserID
+
+	longURL := "https://www.google.com/search?q=golang-testing"
+	longURL2 := "https://www.google.com/search?q=golang-testing-2"
+
+	shortCode1, err := repo.FindOrCreateShortCode(ctx, longURL, 1000, &userId)
+	require.NoError(t, err)
+	require.NotEmpty(t, shortCode1)
+
+	shortCode2, err := repo.FindOrCreateShortCode(ctx, longURL2, 1000, &userId)
+	require.NoError(t, err)
+	require.NotEmpty(t, shortCode2)
+
+	urls, err := repo.GetByUserIDBulk(ctx, userId)
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(urls))
 }

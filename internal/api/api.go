@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/response"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
@@ -18,9 +19,10 @@ import (
 )
 
 type Handler interface {
-	healthCheckHandler(w http.ResponseWriter, r *http.Request)
-	handleCreateURL(w http.ResponseWriter, r *http.Request)
-	handleFetchURL(w http.ResponseWriter, r *http.Request)
+	healthCheckHandler(http.ResponseWriter, *http.Request)
+	handleCreateURL(http.ResponseWriter, *http.Request)
+	handleFetchURL(http.ResponseWriter, *http.Request)
+	handleFetchUserURLHistory(http.ResponseWriter, *http.Request)
 }
 
 func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +49,12 @@ func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 
+	var userId *int64
+
+	if claims, err := auth.GetUserFromContext(r.Context()); err == nil {
+		userId = &claims.UserID
+	}
+
 	var req url.CreateURLRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -66,7 +74,7 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortcode, err := s.urlService.CreateShortCode(r.Context(), req.LongURL)
+	shortcode, err := s.urlService.CreateShortCode(r.Context(), req.LongURL, userId)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to create short URL")
 		return
@@ -131,7 +139,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "Invalid request payload")
 	}
 
-	err = s.userService.Login(r.Context(), req)
+	token, err := s.userService.Login(r.Context(), req)
 	if err != nil {
 		switch err.(type) {
 		case *user.InvalidCredentialErr:
@@ -147,5 +155,24 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response.Success(w, "Success", http.StatusOK)
+	response.Success(w, "Success", http.StatusOK, user.LoginResponse{Token: token})
+}
+
+func (s *Server) handleFetchUserURLHistory(w http.ResponseWriter, r *http.Request) {
+	claims, err := auth.GetUserFromContext(r.Context())
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, "not authorized")
+		return
+	}
+
+	urls, err := s.urlService.FetchUserURLHistory(r.Context(), claims.UserID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Unexpected error has occured, please try again later")
+		return
+	}
+
+	response.Success(w, "success fetching user url history", http.StatusOK, response.ListResponse[*url.URL]{
+		Data:  urls,
+		Count: len(urls),
+	})
 }

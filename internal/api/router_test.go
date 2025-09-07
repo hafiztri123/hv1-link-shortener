@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewServerAndRegisterRoutes(t *testing.T) {
-	server := NewServer(nil, nil, nil, nil)
+	server := NewServer(nil, nil, nil, nil, nil)
 	router := server.RegisterRoutes()
 
 	assert.NotNil(t, server, "New server should not be nil")

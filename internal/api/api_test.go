@@ -5,6 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"hafiztri123/app-link-shortener/internal/auth"
+	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
 	"net/http"
 	"net/http/httptest"
@@ -20,14 +22,17 @@ type mockDB struct {
 }
 
 type mockURLService struct {
-	createResult string
-	createError  error
-	FetchResult  string
-	FetchError   error
+	createResult         string
+	createError          error
+	FetchResult          string
+	FetchError           error
+	FetchListResult      any
+	FetchListResultError error
 }
 
 type mockUserService struct {
-	err error
+	token string
+	err   error
 }
 
 func (m *mockDB) Ping() error {
@@ -37,7 +42,7 @@ func (m *mockDB) Ping() error {
 	return nil
 }
 
-func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) (string, error) {
+func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string, userId *int64) (string, error) {
 	return m.createResult, m.createError
 }
 
@@ -45,12 +50,17 @@ func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (st
 	return m.FetchResult, m.FetchError
 }
 
+func (m *mockURLService) FetchUserURLHistory(ctx context.Context, userId int64) ([]*url.URL, error) {
+	return m.FetchListResult.([]*url.URL), m.FetchListResultError
+
+}
+
 func (m *mockUserService) Register(ctx context.Context, req user.RegisterRequest) error {
 	return m.err
 }
 
-func (m *mockUserService) Login(ctx context.Context, req user.LoginRequest) error {
-	return m.err
+func (m *mockUserService) Login(ctx context.Context, req user.LoginRequest) (string, error) {
+	return m.token, m.err
 }
 
 func TestHandleCreateURL(t *testing.T) {
@@ -329,12 +339,14 @@ func TestLogin(t *testing.T) {
 	testCases := []struct {
 		name           string
 		input          string
+		token          string
 		registerErr    error
 		wantStatusCode int
 	}{
 		{
 			name:           "success",
 			input:          validRequestBody,
+			token:          "token",
 			registerErr:    nil,
 			wantStatusCode: http.StatusOK,
 		},
@@ -342,6 +354,7 @@ func TestLogin(t *testing.T) {
 		{
 			name:           "bad request payload",
 			input:          `{"invalid": "invalid}`,
+			token:          "",
 			registerErr:    nil,
 			wantStatusCode: http.StatusBadRequest,
 		},
@@ -372,7 +385,8 @@ func TestLogin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			server := &Server{
 				userService: &mockUserService{
-					err: tc.registerErr,
+					token: tc.token,
+					err:   tc.registerErr,
 				},
 			}
 
@@ -383,7 +397,76 @@ func TestLogin(t *testing.T) {
 			server.handleLogin(rr, rrl)
 
 			assert.Equal(t, tc.wantStatusCode, rr.Code)
+			if tc.wantStatusCode == http.StatusOK {
+				assert.Contains(t, rr.Body.String(), tc.token)
+			}
 
+		})
+	}
+}
+
+func TestHandleFetchUserURLHistory(t *testing.T) {
+	testCases := []struct {
+		name           string
+		fetchResult    []*url.URL
+		fetchError     error
+		emptyClaims    bool
+		wantStatusCode int
+	}{
+		{
+			name: "success",
+			fetchResult: []*url.URL{
+				{LongURL: "https://example.com/1"},
+				{LongURL: "https://example.com/2"},
+				{LongURL: "https://example.com/3"},
+			},
+			fetchError:     nil,
+			emptyClaims:    false,
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			name:           "empty Claims",
+			fetchResult:    nil,
+			fetchError:     nil,
+			emptyClaims:    true,
+			wantStatusCode: http.StatusUnauthorized,
+		},
+		{
+			name:           "service error",
+			fetchResult:    nil,
+			fetchError:     errors.New("example"),
+			emptyClaims:    false,
+			wantStatusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockService := &mockURLService{
+				FetchListResult:      tc.fetchResult,
+				FetchListResultError: tc.fetchError,
+			}
+
+			server := &Server{
+				urlService: mockService,
+			}
+
+			rrl := httptest.NewRequest(http.MethodGet, "/api/v1/user/history", nil)
+
+			if !tc.emptyClaims {
+				claims := &auth.Claims{
+					UserID: 1,
+					Email:  "example@mail.com",
+				}
+				ctx := context.WithValue(rrl.Context(), auth.UserContextKey, claims)
+				rrl = rrl.WithContext(ctx)
+
+			}
+
+			rr := httptest.NewRecorder()
+			server.handleFetchUserURLHistory(rr, rrl)
+
+			assert.Equal(t, tc.wantStatusCode, rr.Code)
 		})
 	}
 }

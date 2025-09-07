@@ -10,6 +10,7 @@ import (
 
 func TestAuthMiddleware(t *testing.T) {
 	tokenService := NewTokenService("test123")
+	reqBody := "test message"
 	token, err := tokenService.GenerateToken(1, "example@mail.com")
 
 	assert.NoError(t, err)
@@ -17,19 +18,22 @@ func TestAuthMiddleware(t *testing.T) {
 	testCases := []struct {
 		name           string
 		token          string
+		permissive     bool
 		wantStatusCode int
 		wantBody       string
 	}{
 		{
 			name:           "success",
 			token:          "Bearer " + token,
+			permissive:     false,
 			wantStatusCode: http.StatusOK,
-			wantBody:       "OK",
+			wantBody:       reqBody,
 		},
 
 		{
 			name:           "missing auth header",
 			token:          "",
+			permissive:     false,
 			wantStatusCode: http.StatusUnauthorized,
 			wantBody:       "authorization header required",
 		},
@@ -44,8 +48,17 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name:           "tampering the token",
 			token:          "Bearer invalid",
+			permissive:     false,
 			wantStatusCode: http.StatusUnauthorized,
 			wantBody:       "invalid token",
+		},
+
+		{
+			name:           "permissive",
+			token:          "Bearer " + token,
+			permissive:     true,
+			wantStatusCode: http.StatusOK,
+			wantBody:       reqBody,
 		},
 	}
 
@@ -54,14 +67,18 @@ func TestAuthMiddleware(t *testing.T) {
 
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("OK"))
+				w.Write([]byte(reqBody))
 			})
 
-			middleware := AuthMiddleware(tokenService)
+			middleware := AuthMiddleware(tokenService, tc.permissive)
 			handler := middleware(testHandler)
 
 			rrl, _ := http.NewRequest(http.MethodGet, "/", nil)
-			rrl.Header.Add("Authorization", tc.token)
+
+			if !tc.permissive {
+				rrl.Header.Add("Authorization", tc.token)
+			}
+
 			rr := httptest.NewRecorder()
 
 			handler.ServeHTTP(rr, rrl)

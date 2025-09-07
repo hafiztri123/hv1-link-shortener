@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"hafiztri123/app-link-shortener/internal/auth"
 	"testing"
 	"time"
 
@@ -22,6 +23,19 @@ func (m *mockRepository) Insert(ctx context.Context, email string, password stri
 
 func (m *mockRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	return m.getByEmailResult, m.getByEmailErr
+}
+
+type mockJWT struct {
+	token string
+	err   error
+}
+
+func (m *mockJWT) GenerateToken(userID int64, email string) (string, error) {
+	return m.token, m.err
+}
+
+func (m *mockJWT) ValidateToken(tokenString string) (*auth.Claims, error) {
+	return nil, nil
 }
 
 func TestRegister(t *testing.T) {
@@ -63,7 +77,7 @@ func TestRegister(t *testing.T) {
 				insertErr:        tc.insertErr,
 			}
 
-			srv := NewService(nil, mockRepo)
+			srv := NewService(nil, mockRepo, nil)
 
 			err := srv.Register(context.Background(), RegisterRequest{
 				Email:    tc.getByEmailResult.Email,
@@ -81,8 +95,9 @@ func TestLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	testCases := []struct {
-		name             string
-		request          LoginRequest
+		name    string
+		request LoginRequest
+
 		getByEmailResult User
 		getByEmailErr    error
 		wantErr          bool
@@ -151,9 +166,14 @@ func TestLogin(t *testing.T) {
 				getByEmailErr:    tc.getByEmailErr,
 			}
 
-			srv := NewService(nil, mockRepo)
+			mockJwt := &mockJWT{
+				token: "token",
+				err:   nil,
+			}
 
-			err := srv.Login(context.Background(), tc.request)
+			srv := NewService(nil, mockRepo, mockJwt)
+
+			_, err := srv.Login(context.Background(), tc.request)
 
 			if tc.wantErr {
 				assert.Error(t, err)

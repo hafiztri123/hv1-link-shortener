@@ -12,10 +12,16 @@ type contextKey string
 
 const UserContextKey contextKey = "user"
 
-func AuthMiddleware(ts *TokenService) func(http.Handler) http.Handler {
+func AuthMiddleware(ts *TokenService, permissive bool) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
+
+			if permissive && authHeader == "" {
+				h.ServeHTTP(w, r)
+				return
+			}
+
 			if authHeader == "" {
 				slog.Error("missing authorization header")
 				response.Error(w, http.StatusUnauthorized, "authorization header required")

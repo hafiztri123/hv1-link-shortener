@@ -1,45 +1,20 @@
 package url
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
 	"testing"
+
+	_ "hafiztri123/app-link-shortener/internal/utils"
+	"hafiztri123/app-link-shortener/migrations"
 
 	_ "github.com/mattn/go-sqlite3" // Driver for in-memory SQLite
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	_ "hafiztri123/app-link-shortener/internal/utils"
 )
 
-func setupTestDB(t *testing.T) *sql.DB {
-	dsn := fmt.Sprintf("file:%s?mode=memory&cache=shared", t.Name())
-	db, err := sql.Open("sqlite3_proxy", dsn)
-	require.NoError(t, err)
-
-	createTableSQL := `
-		CREATE TABLE urls (
-			id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-			short_code TEXT,
-			long_url TEXT UNIQUE NOT NULL,
-			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		);
-	`
-
-	_, err = db.ExecContext(context.Background(), createTableSQL)
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		db.Close()
-	})
-
-	return db
-}
 
 func TestRepository_IntegrationFlow(t *testing.T) {
-	db := setupTestDB(t)
+	db, ctx := migrations.SetupTestDB(t)
 	repo := NewRepository(db)
-	ctx := context.Background()
 
 	longURL := "https://www.google.com/search?q=golang-testing"
 

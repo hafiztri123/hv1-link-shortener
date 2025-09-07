@@ -39,10 +39,10 @@ func TestURLHistory(t *testing.T) {
 	claims, err := jwtService.ValidateToken(token)
 	assert.NoError(t, err)
 
-	_, err = urlService.CreateShortCode(ctx, "https://example.com", nil)
+	_, err = urlService.CreateShortCode(ctx, "https://example.com", &claims.UserID)
 	assert.NoError(t, err)
 
-	_, err = urlService.CreateShortCode(ctx, "https://example2.com", nil)
+	_, err = urlService.CreateShortCode(ctx, "https://example2.com", &claims.UserID)
 	assert.NoError(t, err)
 
 

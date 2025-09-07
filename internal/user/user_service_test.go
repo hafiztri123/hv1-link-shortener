@@ -95,8 +95,8 @@ func TestLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	testCases := []struct {
-		name             string
-		request          LoginRequest
+		name    string
+		request LoginRequest
 
 		getByEmailResult User
 		getByEmailErr    error

@@ -51,7 +51,7 @@ func TestCreateShortcode(t *testing.T) {
 			name:    "success",
 			longUrl: "https://example.com/success",
 			setupMock: func(mock *MockRepository) {
-				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64, userId *int64 ) (string, error) {
+				mock.FindOrCreateShortCodeFunc = func(ctx context.Context, longURL string, idOffset uint64, userId *int64) (string, error) {
 					return "success", nil
 				}
 			},
@@ -90,55 +90,6 @@ func TestCreateShortcode(t *testing.T) {
 	}
 
 }
-
-// func TestCreateShortCode(t *testing.T) {
-// 	testCases := []struct {
-// 		name          string
-// 		expectedInput string
-// 		setupMock     func(*MockRepository)
-// 		expectedErr   error
-// 	}{
-// 		{
-// 			name:          "success",
-// 			expectedInput: "https://example.com/success",
-// 			setupMock: func(mock *MockRepository) {
-// 				mock.InsertFunc = func(ctx context.Context, longURL string) (int64, error) {
-// 					return 123, nil
-// 				}
-
-// 				mock.UpdateShortCodeFunc = func(ctx context.Context, id int64, shortCode string) error {
-// 					return nil
-// 				}
-// 			},
-// 			expectedErr: nil,
-// 		},
-// 		{
-// 			name:          "database insert fails",
-// 			expectedInput: "https://example.com/failure",
-// 			setupMock: func(mock *MockRepository) {
-// 				mock.InsertFunc = func(ctx context.Context, longURL string) (int64, error) {
-// 					return 0, errors.New("database error")
-// 				}
-// 			},
-// 			expectedErr: errors.New("database error"),
-// 		},
-// 	}
-
-// 	for _, tc := range testCases {
-// 		t.Run(tc.name, func(t *testing.T) {
-// 			MockRepository := &MockRepository{}
-// 			tc.setupMock(MockRepository)
-// 			Service := NewService(MockRepository, nil, 1000)
-
-// 			_, err := Service.CreateShortCode(context.Background(), tc.expectedInput)
-
-// 			if (err != nil && tc.expectedErr == nil) || (err == nil && tc.expectedErr != nil) || (err != nil && tc.expectedErr != nil && err.Error() != tc.expectedErr.Error()) {
-// 				t.Errorf("unexpected error: got %v want %v", err, tc.expectedErr)
-// 			}
-
-// 		})
-// 	}
-// }
 
 func TestFetchLongURL(t *testing.T) {
 	testCases := []struct {
@@ -204,6 +155,49 @@ func TestFetchLongURL(t *testing.T) {
 			assert.Equal(t, tc.expectedURL, longURL)
 			if tc.expectedErr != nil {
 				assert.EqualError(t, err, tc.expectedErr.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestFetchUserURLHistory(t *testing.T) {
+	testCases := []struct {
+		name string
+		urls []*URL
+		err  error
+	}{
+		{
+			name: "success",
+			urls: []*URL{
+				{LongURL: "https://example.com/1"},
+				{LongURL: "https://example.com/2"},
+				{LongURL: "https://example.com/3"},
+			},
+			err: nil,
+		},
+		{
+			name: "database error",
+			urls: nil,
+			err:  errors.New("database error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			MockRepository := &MockRepository{}
+			MockRepository.GetByUserIDBulkFunc = func(ctx context.Context, userID int64) ([]*URL, error) {
+				return tc.urls, tc.err
+			}
+
+			service := NewService(MockRepository, nil, 0)
+
+			urls, err := service.FetchUserURLHistory(context.Background(), 1)
+
+			assert.Equal(t, tc.urls, urls)
+			if tc.err != nil {
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}

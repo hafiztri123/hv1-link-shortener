@@ -55,8 +55,6 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		userId = &claims.UserID
 	}
 
-
-
 	var req url.CreateURLRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -157,7 +155,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response.Success(w, "Success", http.StatusOK, user.LoginResponse{Token: token} )
+	response.Success(w, "Success", http.StatusOK, user.LoginResponse{Token: token})
 }
 
 func (s *Server) handleFetchUserURLHistory(w http.ResponseWriter, r *http.Request) {

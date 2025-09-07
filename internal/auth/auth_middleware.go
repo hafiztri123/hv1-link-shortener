@@ -12,10 +12,16 @@ type contextKey string
 
 const UserContextKey contextKey = "user"
 
-func AuthMiddleware(ts *TokenService) func(http.Handler) http.Handler {
+func AuthMiddleware(ts *TokenService, permissive bool) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
+
+			if permissive && authHeader == "" {
+				h.ServeHTTP(w, r)
+				return
+			}
+
 			if authHeader == "" {
 				slog.Error("missing authorization header")
 				response.Error(w, http.StatusUnauthorized, "authorization header required")
@@ -33,34 +39,6 @@ func AuthMiddleware(ts *TokenService) func(http.Handler) http.Handler {
 			claims, err := ts.ValidateToken(tokenString)
 			if err != nil {
 				response.Error(w, http.StatusUnauthorized, "invalid token")
-				return
-			}
-
-			ctx := context.WithValue(r.Context(), UserContextKey, claims)
-			h.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
-
-func PermissiveAuthMiddleware(ts *TokenService) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				h.ServeHTTP(w, r)
-				return
-			}
-
-			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-			//Authorization must have the prefix "Bearer"
-			if tokenString == authHeader {
-				h.ServeHTTP(w, r)
-				return
-			}
-
-			claims, err := ts.ValidateToken(tokenString)
-			if err != nil {
-				h.ServeHTTP(w, r)
 				return
 			}
 

@@ -45,14 +45,9 @@ func TestURLHistory(t *testing.T) {
 	_, err = urlService.CreateShortCode(ctx, "https://example2.com", &claims.UserID)
 	assert.NoError(t, err)
 
-
 	urls, err := urlService.FetchUserURLHistory(ctx, claims.UserID)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(urls))
-	
 
-
-	
-	
 }

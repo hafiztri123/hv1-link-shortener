@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
 	"net/http"
@@ -31,7 +32,7 @@ type mockURLService struct {
 
 type mockUserService struct {
 	token string
-	err error
+	err   error
 }
 
 func (m *mockDB) Ping() error {
@@ -59,7 +60,7 @@ func (m *mockUserService) Register(ctx context.Context, req user.RegisterRequest
 }
 
 func (m *mockUserService) Login(ctx context.Context, req user.LoginRequest) (string, error) {
-	return m.token ,m.err
+	return m.token, m.err
 }
 
 func TestHandleCreateURL(t *testing.T) {
@@ -338,7 +339,7 @@ func TestLogin(t *testing.T) {
 	testCases := []struct {
 		name           string
 		input          string
-		token string
+		token          string
 		registerErr    error
 		wantStatusCode int
 	}{
@@ -385,7 +386,7 @@ func TestLogin(t *testing.T) {
 			server := &Server{
 				userService: &mockUserService{
 					token: tc.token,
-					err: tc.registerErr,
+					err:   tc.registerErr,
 				},
 			}
 
@@ -400,6 +401,72 @@ func TestLogin(t *testing.T) {
 				assert.Contains(t, rr.Body.String(), tc.token)
 			}
 
+		})
+	}
+}
+
+func TestHandleFetchUserURLHistory(t *testing.T) {
+	testCases := []struct {
+		name           string
+		fetchResult    []*url.URL
+		fetchError     error
+		emptyClaims    bool
+		wantStatusCode int
+	}{
+		{
+			name: "success",
+			fetchResult: []*url.URL{
+				{LongURL: "https://example.com/1"},
+				{LongURL: "https://example.com/2"},
+				{LongURL: "https://example.com/3"},
+			},
+			fetchError:     nil,
+			emptyClaims:    false,
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			name:           "empty Claims",
+			fetchResult:    nil,
+			fetchError:     nil,
+			emptyClaims:    true,
+			wantStatusCode: http.StatusUnauthorized,
+		},
+		{
+			name:           "service error",
+			fetchResult:    nil,
+			fetchError:     errors.New("example"),
+			emptyClaims:    false,
+			wantStatusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockService := &mockURLService{
+				FetchListResult:      tc.fetchResult,
+				FetchListResultError: tc.fetchError,
+			}
+
+			server := &Server{
+				urlService: mockService,
+			}
+
+			rrl := httptest.NewRequest(http.MethodGet, "/api/v1/user/history", nil)
+
+			if !tc.emptyClaims {
+				claims := &auth.Claims{
+					UserID: 1,
+					Email:  "example@mail.com",
+				}
+				ctx := context.WithValue(rrl.Context(), auth.UserContextKey, claims)
+				rrl = rrl.WithContext(ctx)
+
+			}
+
+			rr := httptest.NewRecorder()
+			server.handleFetchUserURLHistory(rr, rrl)
+
+			assert.Equal(t, tc.wantStatusCode, rr.Code)
 		})
 	}
 }

@@ -67,10 +67,10 @@ func GetMigrator(db *sql.DB) (*migrate.Migrate, error) {
 	}
 
 	return migrate.NewWithInstance(
-		"iofs",       
-		sourceDriver, 
-		"test-db",   
-		driver,       
+		"iofs",
+		sourceDriver,
+		"test-db",
+		driver,
 	)
 }
 

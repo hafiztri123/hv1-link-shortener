@@ -45,13 +45,11 @@ func main() {
 
 	tokenService := auth.NewTokenService(cfg.SecretKey)
 
-
 	urlRepo := url.NewRepository(db)
 	urlService := url.NewService(urlRepo, redis, cfg.IDOffset)
 
 	userRepo := user.NewRepository(db)
 	userService := user.NewService(db, userRepo, tokenService)
-
 
 	server := api.NewServer(db, redis, urlService, userService, tokenService)
 	router := server.RegisterRoutes()

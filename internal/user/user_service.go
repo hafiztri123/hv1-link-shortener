@@ -17,14 +17,14 @@ type UserService interface {
 type Service struct {
 	db   *sql.DB
 	repo UserRepository
-	jwt auth.JWT
+	jwt  auth.JWT
 }
 
 func NewService(db *sql.DB, repo UserRepository, jwt auth.JWT) *Service {
 	return &Service{
 		db:   db,
 		repo: repo,
-		jwt: jwt,
+		jwt:  jwt,
 	}
 }
 

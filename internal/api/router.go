@@ -13,6 +13,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+type DB interface {
+	Ping() error
+}
+
 type Server struct {
 	db           DB
 	redis        *redis.Client

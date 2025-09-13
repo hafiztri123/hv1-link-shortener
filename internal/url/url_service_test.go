@@ -35,7 +35,7 @@ func (m *MockRepository) FindOrCreateShortCode(ctx context.Context, longURL stri
 	return m.FindOrCreateShortCodeFunc(ctx, longURL, idOffset, nil)
 }
 
-func (m *MockRepository) GetByUserIDBulk(ctx context.Context, userId int64) ([]*URL, error) {
+func (m *MockRepository) GetByUserID_Bulk(ctx context.Context, userId int64) ([]*URL, error) {
 	return m.GetByUserIDBulkFunc(ctx, userId)
 }
 

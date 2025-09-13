@@ -36,6 +36,7 @@ func (s *Service) CreateShortCode(ctx context.Context, longURL string, userId *i
 	return shortCode, nil
 }
 
+
 func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
 	id := FromBase62(shortCode) - s.idOffset
 
@@ -94,7 +95,7 @@ func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, e
 
 func (s *Service) FetchUserURLHistory(ctx context.Context, userId int64) ([]*URL, error) {
 
-	urls, err := s.repo.GetByUserIDBulk(ctx, userId)
+	urls, err := s.repo.GetByUserID_Bulk(ctx, userId)
 
 	if err != nil {
 		return nil, err
@@ -124,4 +125,9 @@ func (s *Service) GenerateQRCode(url string) ([]byte, error) {
 	}
 
 	return qrBytes, nil
+}
+
+func (s *Service) CreateShortCode_Bulk(ctx context.Context, longUrl []string) ([]string, error) {
+	//
+	return nil, nil
 }

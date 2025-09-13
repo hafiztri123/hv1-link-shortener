@@ -79,7 +79,7 @@ func TestRepository_FetchHistoryURL(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, shortCode2)
 
-	urls, err := repo.GetByUserIDBulk(ctx, userId)
+	urls, err := repo.GetByUserID_Bulk(ctx, userId)
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(urls))
 }

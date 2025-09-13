@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"hafiztri123/app-link-shortener/internal/utils"
 	"log/slog"
 
@@ -13,7 +14,7 @@ import (
 type URLRepository interface {
 	FindOrCreateShortCode(context.Context, string, uint64, *int64) (string, error)
 	GetByID(context.Context, int64) (*URL, error)
-	GetByUserIDBulk(context.Context, int64) ([]*URL, error)
+	GetByUserID_Bulk(context.Context, int64) ([]*URL, error)
 }
 
 type Repository struct {
@@ -38,7 +39,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*URL, error) {
 	return &url, nil
 }
 
-func (r *Repository) GetByUserIDBulk(ctx context.Context, userId int64) ([]*URL, error) {
+func (r *Repository) GetByUserID_Bulk(ctx context.Context, userId int64) ([]*URL, error) {
 	fetchQuery := `SELECT id, short_code, long_url, created_at FROM urls WHERE user_id = $1`
 
 	rows, err := r.DB.QueryContext(ctx, fetchQuery, userId)
@@ -70,7 +71,7 @@ func (r *Repository) GetByUserIDBulk(ctx context.Context, userId int64) ([]*URL,
 }
 
 func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, idOffset uint64, userId *int64) (string, error) {
-	tx, err := r.DB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		slog.Error("Failed to begin transaction", "error", err)
 		return "", err
@@ -115,4 +116,18 @@ func (r *Repository) FindOrCreateShortCode(ctx context.Context, longURL string, 
 	}
 
 	return newShortcode, nil
+}
+
+func (r *Repository) FindOrCreateShortCode_Bulk(ctx context.Context, longURLs []string, idOffset uint64, userId *int64) ([]string, error) {
+	db, err := r.DB.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer db.Rollback()
+
+	fetchQuery := fmt.Sprintf(`SELECT (short_code, long_url) FROM urls WHERE user_id IS NOT DISTINCT FROM $1 AND long_url IN (%s) AND `, utils.PlaceholderBuilder(len(longURLs), 2))
+
+	rows, err := db.QueryContext(ctx, fetchQuery, longURLs...)
+
 }

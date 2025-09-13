@@ -5,6 +5,11 @@ import (
 	"net/http"
 )
 
+type ListResponse[T any] struct {
+	Data  []T
+	Count int
+}
+
 func Success(w http.ResponseWriter, message string, status int, data ...any) {
 	response := map[string]any{
 		"status":  "success",

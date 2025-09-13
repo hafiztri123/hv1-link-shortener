@@ -13,6 +13,7 @@ type URLService interface {
 	CreateShortCode(context.Context, string, *int64) (string, error)
 	FetchLongURL(context.Context, string) (string, error)
 	FetchUserURLHistory(context.Context, int64) ([]*URL, error)
+	GenerateQRCode(string) ([]byte, error)
 }
 
 type Service struct {

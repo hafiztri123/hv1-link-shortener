@@ -176,3 +176,31 @@ func (s *Server) handleFetchUserURLHistory(w http.ResponseWriter, r *http.Reques
 		Count: len(urls),
 	})
 }
+
+
+func (s *Server) handleGenerateQR(w http.ResponseWriter, r *http.Request) {
+	shortCode := chi.URLParam(r, "shortCode")
+	if shortCode == "" {
+		response.Error(w, http.StatusBadRequest, "short_url is a required field")
+		return
+	}
+
+	longUrl, err := s.urlService.FetchLongURL(r.Context(), shortCode)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			response.Error(w, http.StatusNotFound, "Short URL not found")
+			return
+		}
+
+		response.Error(w, http.StatusInternalServerError, "Failed to fetch long URL")
+		return
+	}
+
+	qr, err := s.urlService.GenerateQRCode(longUrl)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Failed to generate qr code")
+		return
+	}
+
+	response.Success(w, "success generating qr code", http.StatusOK, qr)
+}

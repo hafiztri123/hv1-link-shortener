@@ -50,6 +50,10 @@ func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (st
 	return m.FetchResult, m.FetchError
 }
 
+func (m *mockURLService) GenerateQRCode(url string) ([]byte, error) {
+	return nil, nil
+}
+
 func (m *mockURLService) FetchUserURLHistory(ctx context.Context, userId int64) ([]*url.URL, error) {
 	return m.FetchListResult.([]*url.URL), m.FetchListResultError
 

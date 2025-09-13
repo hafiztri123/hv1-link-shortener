@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/skip2/go-qrcode"
 )
 
 type URLService interface {
@@ -111,4 +112,15 @@ func (s *Service) getIDFromDatabase(ctx context.Context, id int64) (string, erro
 
 	return url.LongURL, nil
 
+}
+
+func (s *Service) GenerateQRCode(url string) ([]byte, error) {
+
+	qrBytes, err := qrcode.Encode(url, qrcode.Medium, 256)
+	if err != nil {
+		slog.Error("Failed to generate qr code", "error", err)
+		return nil, err
+	}
+
+	return qrBytes, nil
 }

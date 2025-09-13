@@ -72,3 +72,38 @@ func TestWriteJSONWithoutData(t *testing.T) {
 	Success(rr, "Success", http.StatusOK)
 	assert.Equal(t, http.StatusOK, rr.Code)
 }
+
+func TestWriteIMGError(t *testing.T) {
+	// Create a ResponseRecorder that will fail on Write
+	rr := &FailingResponseRecorder{
+		ResponseRecorder: httptest.NewRecorder(),
+	}
+
+	// This should trigger the error path in writeIMG
+	Success(rr, "Success", http.StatusOK, []byte("image data"))
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "image/png", rr.Header().Get("Content-Type"))
+}
+
+// FailingResponseRecorder simulates a write failure
+type FailingResponseRecorder struct {
+	*httptest.ResponseRecorder
+}
+
+func (f *FailingResponseRecorder) Write(p []byte) (n int, err error) {
+	// Return an error to trigger the error path in writeIMG
+	return 0, assert.AnError
+}
+
+func TestWriteJSONError(t *testing.T) {
+	// Test with data that will cause json encoding to fail
+	rr := httptest.NewRecorder()
+
+	// Use a channel which can't be marshaled to JSON to trigger the error path
+	ch := make(chan int)
+	Success(rr, "Success", http.StatusOK, ch)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+}

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func PlaceholderBuilder(dataCount int, offset int) string {
+func SelectPlaceholderBuilder(dataCount int, offset int) string {
 	if dataCount == 0 {
 		return ""
 	}

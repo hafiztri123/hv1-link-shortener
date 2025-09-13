@@ -2,6 +2,7 @@ package url
 
 import (
 	"context"
+	"hafiztri123/app-link-shortener/internal/auth"
 	"log/slog"
 	"time"
 
@@ -9,8 +10,14 @@ import (
 	"github.com/skip2/go-qrcode"
 )
 
+type CreateShortCodeBulkResult struct {
+	LongURL   string `json:"long_url"`
+	ShortCode string `json:"short_code"`
+}
+
 type URLService interface {
-	CreateShortCode(context.Context, string, *int64) (string, error)
+	CreateShortCode(context.Context, string) (string, error)
+	CreateShortCode_Bulk(context.Context, []string) ([]CreateShortCodeBulkResult, error)
 	FetchLongURL(context.Context, string) (string, error)
 	FetchUserURLHistory(context.Context, int64) ([]*URL, error)
 	GenerateQRCode(string) ([]byte, error)
@@ -26,8 +33,15 @@ func NewService(repo URLRepository, redis *redis.Client, idOffset uint64) *Servi
 	return &Service{repo: repo, redis: redis, idOffset: idOffset}
 }
 
-func (s *Service) CreateShortCode(ctx context.Context, longURL string, userId *int64) (string, error) {
-	shortCode, err := s.repo.FindOrCreateShortCode(ctx, longURL, s.idOffset, userId)
+func (s *Service) CreateShortCode(ctx context.Context, longURL string) (string, error) {
+	user, _ := auth.GetUserFromContext(ctx)
+
+	var userID *int64
+	if user != nil {
+		userID = &user.UserID
+	}
+
+	shortCode, err := s.repo.FindOrCreateShortCode(ctx, longURL, s.idOffset, userID)
 	if err != nil {
 		slog.Error("Failed to find or create short code", "error", err, "url", longURL)
 		return "", err
@@ -35,7 +49,6 @@ func (s *Service) CreateShortCode(ctx context.Context, longURL string, userId *i
 
 	return shortCode, nil
 }
-
 
 func (s *Service) FetchLongURL(ctx context.Context, shortCode string) (string, error) {
 	id := FromBase62(shortCode) - s.idOffset
@@ -105,17 +118,6 @@ func (s *Service) FetchUserURLHistory(ctx context.Context, userId int64) ([]*URL
 
 }
 
-func (s *Service) getIDFromDatabase(ctx context.Context, id int64) (string, error) {
-	url, err := s.repo.GetByID(ctx, id)
-
-	if err != nil {
-		return "", err
-	}
-
-	return url.LongURL, nil
-
-}
-
 func (s *Service) GenerateQRCode(url string) ([]byte, error) {
 
 	qrBytes, err := qrcode.Encode(url, qrcode.Medium, 256)
@@ -127,7 +129,28 @@ func (s *Service) GenerateQRCode(url string) ([]byte, error) {
 	return qrBytes, nil
 }
 
-func (s *Service) CreateShortCode_Bulk(ctx context.Context, longUrl []string) ([]string, error) {
-	//
-	return nil, nil
+func (s *Service) CreateShortCode_Bulk(ctx context.Context, longUrl []string) ([]CreateShortCodeBulkResult, error) {
+	user, _ := auth.GetUserFromContext(ctx)
+
+	var userID *int64
+	if user != nil {
+		userID = &user.UserID
+	}
+
+	results, err := s.repo.FindOrCreateShortCode_Bulk(ctx, longUrl, s.idOffset, userID)
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (s *Service) getIDFromDatabase(ctx context.Context, id int64) (string, error) {
+	url, err := s.repo.GetByID(ctx, id)
+
+	if err != nil {
+		return "", err
+	}
+
+	return url.LongURL, nil
+
 }

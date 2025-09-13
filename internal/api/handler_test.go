@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/url"
@@ -24,6 +25,8 @@ type mockDB struct {
 type mockURLService struct {
 	createResult         string
 	createError          error
+	createBulkResult     []url.CreateShortCodeBulkResult
+	createBulkError      error
 	FetchResult          string
 	FetchError           error
 	GenerateQRCodeResult []byte
@@ -44,7 +47,7 @@ func (m *mockDB) Ping() error {
 	return nil
 }
 
-func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string, userId *int64) (string, error) {
+func (m *mockURLService) CreateShortCode(ctx context.Context, longURL string) (string, error) {
 	return m.createResult, m.createError
 }
 
@@ -67,6 +70,10 @@ func (m *mockUserService) Register(ctx context.Context, req user.RegisterRequest
 
 func (m *mockUserService) Login(ctx context.Context, req user.LoginRequest) (string, error) {
 	return m.token, m.err
+}
+
+func (m *mockURLService) CreateShortCode_Bulk(ctx context.Context, longURLs []string) ([]url.CreateShortCodeBulkResult, error) {
+	return m.createBulkResult, m.createBulkError
 }
 
 func TestHandleCreateURL(t *testing.T) {
@@ -571,6 +578,109 @@ func TestHandleGenerateQR(t *testing.T) {
 			assert.Equal(t, tc.wantStatusCode, rr.Code)
 			for k, v := range tc.wantHeaders {
 				assert.Equal(t, v, rr.Header().Get(k))
+			}
+		})
+	}
+}
+
+func TestHandleCreateURL_Bulk(t *testing.T) {
+	testCases := []struct {
+		name           string
+		input          string
+		mockResult     []url.CreateShortCodeBulkResult
+		mockError      error
+		wantStatus     int
+		wantMsg        string
+		wantResultSize int
+	}{
+		{
+			name:  "success",
+			input: `{"long_urls": ["https://example.com/1", "https://example.com/2"]}`,
+			mockResult: []url.CreateShortCodeBulkResult{
+				{LongURL: "https://example.com/1", ShortCode: "abc1"},
+				{LongURL: "https://example.com/2", ShortCode: "abc2"},
+			},
+			mockError:      nil,
+			wantStatus:     http.StatusOK,
+			wantMsg:        "Success! Bulk short URLs created",
+			wantResultSize: 2,
+		},
+		{
+			name:       "invalid request payload",
+			input:      `{"failed,"}`,
+			mockResult: nil,
+			mockError:  nil,
+			wantStatus: http.StatusBadRequest,
+			wantMsg:    "Invalid request payload",
+		},
+		{
+			name:       "empty long_urls array",
+			input:      `{"long_urls": []}`,
+			mockResult: nil,
+			mockError:  nil,
+			wantStatus: http.StatusBadRequest,
+			wantMsg:    "long_urls array cannot be empty",
+		},
+		{
+			name:       "empty URL in array",
+			input:      `{"long_urls": ["https://example.com", ""]}`,
+			mockResult: nil,
+			mockError:  nil,
+			wantStatus: http.StatusBadRequest,
+			wantMsg:    "long_urls[1] cannot be empty",
+		},
+		{
+			name:       "invalid URL in array",
+			input:      `{"long_urls": ["https://example.com", "invalid-url"]}`,
+			mockResult: nil,
+			mockError:  nil,
+			wantStatus: http.StatusBadRequest,
+			wantMsg:    "long_urls[1] is not a valid URL",
+		},
+		{
+			name:       "service error",
+			input:      `{"long_urls": ["https://example.com"]}`,
+			mockResult: nil,
+			mockError:  errors.New("database error"),
+			wantStatus: http.StatusInternalServerError,
+			wantMsg:    "Failed to create short URLs",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockURLService := &mockURLService{
+				createBulkResult: tc.mockResult,
+				createBulkError:  tc.mockError,
+			}
+
+			server := &Server{
+				urlService: mockURLService,
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/url/shorten/bulk", bytes.NewBuffer([]byte(tc.input)))
+			req.Header.Set("Content-Type", "application/json")
+			rr := httptest.NewRecorder()
+
+			server.handleCreateURL_Bulk(rr, req)
+
+			assert.Equal(t, tc.wantStatus, rr.Code)
+
+			if tc.wantMsg != "" {
+				var response map[string]interface{}
+				err := json.Unmarshal(rr.Body.Bytes(), &response)
+				assert.NoError(t, err)
+				assert.Equal(t, tc.wantMsg, response["message"])
+			}
+
+			if tc.wantResultSize > 0 {
+				var response map[string]interface{}
+				err := json.Unmarshal(rr.Body.Bytes(), &response)
+				assert.NoError(t, err)
+
+				data, ok := response["data"].([]interface{})
+				assert.True(t, ok)
+				assert.Equal(t, tc.wantResultSize, len(data))
 			}
 		})
 	}

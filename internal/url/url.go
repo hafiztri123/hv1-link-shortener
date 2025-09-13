@@ -23,3 +23,7 @@ type CreateURLResponse struct {
 type CreateURLRequest_Bulk struct {
 	LongURLs []string `json:"long_urls"`
 }
+
+type CreateURLResponse_Bulk struct {
+	Results []CreateURLResponse `json:"results"`
+}

@@ -21,6 +21,7 @@ import (
 type Handler interface {
 	healthCheckHandler(http.ResponseWriter, *http.Request)
 	handleCreateURL(http.ResponseWriter, *http.Request)
+	handleCreateURL_Bulk(http.ResponseWriter, *http.Request)
 	handleFetchURL(http.ResponseWriter, *http.Request)
 	handleFetchUserURLHistory(http.ResponseWriter, *http.Request)
 	handleGenerateQR(http.ResponseWriter, *http.Request)
@@ -49,13 +50,6 @@ func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
-
-	var userId *int64
-
-	if claims, err := auth.GetUserFromContext(r.Context()); err == nil {
-		userId = &claims.UserID
-	}
-
 	var req url.CreateURLRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -75,13 +69,48 @@ func (s *Server) handleCreateURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortcode, err := s.urlService.CreateShortCode(r.Context(), req.LongURL, userId)
+	shortcode, err := s.urlService.CreateShortCode(r.Context(), req.LongURL)
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed to create short URL")
 		return
 	}
 
 	response.Success(w, "Success!, Short URL created", http.StatusOK, url.CreateURLResponse{ShortCode: shortcode})
+}
+
+func (s *Server) handleCreateURL_Bulk(w http.ResponseWriter, r *http.Request) {
+	var req url.CreateURLRequest_Bulk
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	if len(req.LongURLs) == 0 {
+		response.Error(w, http.StatusBadRequest, "long_urls array cannot be empty")
+		return
+	}
+
+	for i, longURL := range req.LongURLs {
+		if longURL == "" {
+			response.Error(w, http.StatusBadRequest, fmt.Sprintf("long_urls[%d] cannot be empty", i))
+			return
+		}
+
+		if !utils.IsValidURL(longURL) {
+			response.Error(w, http.StatusBadRequest, fmt.Sprintf("long_urls[%d] is not a valid URL", i))
+			return
+		}
+	}
+
+	results, err := s.urlService.CreateShortCode_Bulk(r.Context(), req.LongURLs)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Failed to create short URLs")
+		return
+	}
+
+	response.Success(w, "Success! Bulk short URLs created", http.StatusOK, results)
 }
 
 func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {

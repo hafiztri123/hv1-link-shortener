@@ -47,6 +47,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		v1.Route("/url", func(protected chi.Router) {
 			protected.Use(auth.AuthMiddleware(s.tokenService, true))
 			protected.Post("/shorten", s.handleCreateURL)
+			protected.Post("/shorten/bulk", s.handleCreateURL_Bulk)
 		})
 
 		v1.Route("/user", func(protected chi.Router) {

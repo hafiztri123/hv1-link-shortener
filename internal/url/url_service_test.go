@@ -12,11 +12,12 @@ import (
 )
 
 type MockRepository struct {
-	InsertFunc                func(context.Context, string) (int64, error)
-	UpdateShortCodeFunc       func(context.Context, int64, string) error
-	GetByIDFunc               func(context.Context, int64) (*URL, error)
-	FindOrCreateShortCodeFunc func(context.Context, string, uint64, *int64) (string, error)
-	GetByUserIDBulkFunc       func(context.Context, int64) ([]*URL, error)
+	InsertFunc                    func(context.Context, string) (int64, error)
+	UpdateShortCodeFunc           func(context.Context, int64, string) error
+	GetByIDFunc                   func(context.Context, int64) (*URL, error)
+	FindOrCreateShortCodeFunc     func(context.Context, string, uint64, *int64) (string, error)
+	GetByUserIDBulkFunc           func(context.Context, int64) ([]*URL, error)
+	FindOrCreateShortCodeBulkFunc func(context.Context, []string, uint64, *int64) ([]CreateShortCodeBulkResult, error)
 }
 
 func (m *MockRepository) Insert(ctx context.Context, longURL string) (int64, error) {
@@ -35,7 +36,11 @@ func (m *MockRepository) FindOrCreateShortCode(ctx context.Context, longURL stri
 	return m.FindOrCreateShortCodeFunc(ctx, longURL, idOffset, nil)
 }
 
-func (m *MockRepository) GetByUserIDBulk(ctx context.Context, userId int64) ([]*URL, error) {
+func (m *MockRepository) FindOrCreateShortCode_Bulk(ctx context.Context, longURLs []string, idOffset uint64, userId *int64) ([]CreateShortCodeBulkResult, error) {
+	return m.FindOrCreateShortCodeBulkFunc(ctx, longURLs, idOffset, nil)
+}
+
+func (m *MockRepository) GetByUserID_Bulk(ctx context.Context, userId int64) ([]*URL, error) {
 	return m.GetByUserIDBulkFunc(ctx, userId)
 }
 
@@ -77,7 +82,7 @@ func TestCreateShortcode(t *testing.T) {
 			MockRepository := &MockRepository{}
 			tc.setupMock(MockRepository)
 			service := &Service{repo: MockRepository, idOffset: 1000}
-			got, err := service.CreateShortCode(context.Background(), tc.longUrl, nil)
+			got, err := service.CreateShortCode(context.Background(), tc.longUrl)
 
 			if tc.wantErr != nil {
 				assert.Error(t, err)
@@ -235,4 +240,102 @@ func TestGenerateQRCode(t *testing.T) {
 
 		})
 	}
+}
+
+func TestGenerateShortCodeBulk(t *testing.T) {
+	testCases := []struct {
+		name    string
+		input   []string
+		result  []CreateShortCodeBulkResult
+		err     error
+		wantErr bool
+	}{
+		{
+			name: "success",
+			input: []string{
+				"https://example.com/1",
+				"https://example.com/2",
+				"https://example.com/3",
+			},
+			result: []CreateShortCodeBulkResult{
+				{ShortCode: "1", LongURL: "https://example.com/1"},
+				{ShortCode: "2", LongURL: "https://example.com/2"},
+				{ShortCode: "3", LongURL: "https://example.com/3"},
+			},
+			err:     nil,
+			wantErr: false,
+		},
+
+		{
+			name: "invalid url",
+			input: []string{
+				"",
+				"https://example.com/2",
+				"https://example.com/3",
+			},
+			result:  nil,
+			err:     errors.New("invalid url"),
+			wantErr: true,
+		},
+	}
+
+	redis, _ := redismock.NewClientMock()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockRepository := &MockRepository{
+				FindOrCreateShortCodeBulkFunc: func(ctx context.Context, s []string, u uint64, i *int64) ([]CreateShortCodeBulkResult, error) {
+					return tc.result, tc.err
+				},
+			}
+
+			service := NewService(mockRepository, redis, 0)
+			result, err := service.CreateShortCode_Bulk(context.Background(), tc.input)
+
+			assert.Equal(t, tc.result, result)
+			if tc.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+
+}
+
+func TestFetchLongURL_CacheError(t *testing.T) {
+	redisClient, redisMock := redismock.NewClientMock()
+	mockRepository := &MockRepository{}
+
+	// Mock redis get to return an error (not redis.Nil)
+	redisMock.ExpectGet("url:g8").SetErr(errors.New("redis connection error"))
+
+	// Mock database fallback to also return an error
+	mockRepository.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
+		return nil, errors.New("database error")
+	}
+
+	service := NewService(mockRepository, redisClient, 0)
+
+	_, err := service.FetchLongURL(context.Background(), "g8")
+	assert.Error(t, err)
+}
+
+func TestFetchLongURL_DatabaseError(t *testing.T) {
+	redisClient, redisMock := redismock.NewClientMock()
+	mockRepository := &MockRepository{}
+
+	// Mock redis get to return redis.Nil (cache miss)
+	redisMock.ExpectGet("url:g8").SetErr(redis.Nil)
+
+	// Mock database to return an error
+	mockRepository.GetByIDFunc = func(ctx context.Context, id int64) (*URL, error) {
+		return nil, errors.New("database error")
+	}
+
+	service := NewService(mockRepository, redisClient, 0)
+
+	_, err := service.FetchLongURL(context.Background(), "g8")
+	assert.Error(t, err)
+	assert.Equal(t, "database error", err.Error())
 }

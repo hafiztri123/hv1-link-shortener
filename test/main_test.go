@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
@@ -39,13 +40,15 @@ func TestURLHistory(t *testing.T) {
 	claims, err := jwtService.ValidateToken(token)
 	assert.NoError(t, err)
 
-	_, err = urlService.CreateShortCode(ctx, "https://example.com", &claims.UserID)
+	ctxWithValue := context.WithValue(ctx, auth.UserContextKey, claims)
+
+	_, err = urlService.CreateShortCode(ctxWithValue, "https://example.com")
 	assert.NoError(t, err)
 
-	_, err = urlService.CreateShortCode(ctx, "https://example2.com", &claims.UserID)
+	_, err = urlService.CreateShortCode(ctxWithValue, "https://example2.com")
 	assert.NoError(t, err)
 
-	urls, err := urlService.FetchUserURLHistory(ctx, claims.UserID)
+	urls, err := urlService.FetchUserURLHistory(ctxWithValue, claims.UserID)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(urls))

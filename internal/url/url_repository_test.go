@@ -1,6 +1,7 @@
 package url
 
 import (
+	"sync"
 	"testing"
 
 	"hafiztri123/app-link-shortener/internal/auth"
@@ -79,7 +80,83 @@ func TestRepository_FetchHistoryURL(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, shortCode2)
 
-	urls, err := repo.GetByUserIDBulk(ctx, userId)
+	urls, err := repo.GetByUserID_Bulk(ctx, userId)
 	require.NoError(t, err)
 	assert.Equal(t, 2, len(urls))
+}
+
+func TestRepository_Shortening_Bulk(t *testing.T) {
+	db, ctx := migrations.SetupTestDB(t)
+	repo := NewRepository(db)
+
+	t.Cleanup(func() {
+		require.NoError(t, db.Close())
+	})
+
+	longURL := "https://www.google.com/search?q=golang-testing"
+	longURL2 := "https://www.google.com/search?q=golang-testing-2"
+
+	result, err := repo.FindOrCreateShortCode_Bulk(ctx, []string{longURL, longURL2}, 1000, nil)
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(result))
+
+	longURL3 := "https://www.google.com/search?q=golang-testing-"
+	result, err = repo.FindOrCreateShortCode_Bulk(ctx, []string{longURL3}, 1000, nil)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(result))
+
+	t.Log(result)
+}
+
+func TestRepository_Shortening_Race(t *testing.T) {
+	db, ctx := migrations.SetupTestDB(t)
+	repo := NewRepository(db)
+
+	t.Cleanup(func() {
+		require.NoError(t, db.Close())
+	})
+
+	var wg sync.WaitGroup
+	worker := 5
+	for i := 0; i < worker; i++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 100; j++ {
+				_, err := repo.FindOrCreateShortCode(ctx, "https://www.google.com/search?q=golang-testing", 1000, nil)
+				require.NoError(t, err)
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+func TestRepository_GetByUserID_Bulk_ScanError(t *testing.T) {
+	db, ctx := migrations.SetupTestDB(t)
+	repo := NewRepository(db)
+
+	t.Cleanup(func() {
+		require.NoError(t, db.Close())
+	})
+
+	// Test with non-existent user ID - should return empty slice
+	urls, err := repo.GetByUserID_Bulk(ctx, 999)
+	require.NoError(t, err)
+	assert.Equal(t, 0, len(urls))
+}
+
+func TestRepository_GetByID_NotFound(t *testing.T) {
+	db, ctx := migrations.SetupTestDB(t)
+	repo := NewRepository(db)
+
+	t.Cleanup(func() {
+		require.NoError(t, db.Close())
+	})
+
+	// Test with non-existent ID
+	_, err := repo.GetByID(ctx, 999)
+	require.Error(t, err)
 }

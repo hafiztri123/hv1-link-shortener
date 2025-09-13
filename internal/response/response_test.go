@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSuccess(t *testing.T) {
@@ -56,4 +58,17 @@ func TestError(t *testing.T) {
 	if status, _ := responseBody["status"].(string); status != "error" {
 		t.Errorf("expected status 'error', got: %v", status)
 	}
+}
+
+func TestImage(t *testing.T) {
+	rr := httptest.NewRecorder()
+	Success(rr, "Success", http.StatusOK, []byte("Hello world"))
+
+	assert.Equal(t, "image/png", rr.Header().Get("Content-Type"))
+}
+
+func TestWriteJSONWithoutData(t *testing.T) {
+	rr := httptest.NewRecorder()
+	Success(rr, "Success", http.StatusOK)
+	assert.Equal(t, http.StatusOK, rr.Code)
 }

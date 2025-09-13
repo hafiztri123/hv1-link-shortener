@@ -26,6 +26,8 @@ type mockURLService struct {
 	createError          error
 	FetchResult          string
 	FetchError           error
+	GenerateQRCodeResult []byte
+	GenerateQRCodeError  error
 	FetchListResult      any
 	FetchListResultError error
 }
@@ -51,7 +53,7 @@ func (m *mockURLService) FetchLongURL(ctx context.Context, shortCode string) (st
 }
 
 func (m *mockURLService) GenerateQRCode(url string) ([]byte, error) {
-	return nil, nil
+	return m.GenerateQRCodeResult, m.GenerateQRCodeError
 }
 
 func (m *mockURLService) FetchUserURLHistory(ctx context.Context, userId int64) ([]*url.URL, error) {
@@ -471,6 +473,105 @@ func TestHandleFetchUserURLHistory(t *testing.T) {
 			server.handleFetchUserURLHistory(rr, rrl)
 
 			assert.Equal(t, tc.wantStatusCode, rr.Code)
+		})
+	}
+}
+
+func TestHandleGenerateQR(t *testing.T) {
+	testCases := []struct {
+		name              string
+		shortcode         string
+		wantHeaders       map[string]string
+		setMockUrlService func(*mockURLService)
+		wantStatusCode    int
+	}{
+		{
+			name:      "success",
+			shortcode: "example",
+			setMockUrlService: func(mu *mockURLService) {
+				mu.FetchResult = "https://example.com"
+				mu.FetchError = nil
+				mu.GenerateQRCodeResult = []byte("example")
+				mu.GenerateQRCodeError = nil
+			},
+			wantHeaders: map[string]string{
+				"Content-Type": "image/png",
+			},
+			wantStatusCode: http.StatusOK,
+		},
+
+		{
+			name:      "missing short code",
+			shortcode: "",
+			setMockUrlService: func(mu *mockURLService) {
+				mu.FetchResult = "https://example.com"
+				mu.FetchError = nil
+				mu.GenerateQRCodeResult = []byte("example")
+				mu.GenerateQRCodeError = nil
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+
+		{
+			name:      "fetch long url error (no rows)",
+			shortcode: "example",
+			setMockUrlService: func(mu *mockURLService) {
+				mu.FetchResult = ""
+				mu.FetchError = sql.ErrNoRows
+				mu.GenerateQRCodeResult = []byte("example")
+				mu.GenerateQRCodeError = nil
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name:      "fetch long url error (non database error)",
+			shortcode: "example",
+			setMockUrlService: func(mu *mockURLService) {
+				mu.FetchResult = ""
+				mu.FetchError = errors.New("example")
+				mu.GenerateQRCodeResult = []byte("example")
+				mu.GenerateQRCodeError = nil
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+
+		{
+			name:      "generate qr error",
+			shortcode: "example",
+			setMockUrlService: func(mu *mockURLService) {
+				mu.FetchResult = "https://example.com"
+				mu.FetchError = nil
+				mu.GenerateQRCodeResult = nil
+				mu.GenerateQRCodeError = errors.New("example")
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockUrlService := &mockURLService{}
+			tc.setMockUrlService(mockUrlService)
+			server := NewServer(nil, nil, mockUrlService, nil, nil)
+
+			reqCtx := chi.NewRouteContext()
+
+			if tc.shortcode != "" {
+				reqCtx.URLParams.Add("shortCode", tc.shortcode)
+			}
+
+			rrl := httptest.NewRequest(http.MethodGet, "/api/v1/url/example/qr", nil)
+
+			rrl = rrl.WithContext(context.WithValue(rrl.Context(), chi.RouteCtxKey, reqCtx))
+
+			rr := httptest.NewRecorder()
+
+			server.handleGenerateQR(rr, rrl)
+
+			assert.Equal(t, tc.wantStatusCode, rr.Code)
+			for k, v := range tc.wantHeaders {
+				assert.Equal(t, v, rr.Header().Get(k))
+			}
 		})
 	}
 }

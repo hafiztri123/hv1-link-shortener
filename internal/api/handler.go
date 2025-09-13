@@ -23,6 +23,7 @@ type Handler interface {
 	handleCreateURL(http.ResponseWriter, *http.Request)
 	handleFetchURL(http.ResponseWriter, *http.Request)
 	handleFetchUserURLHistory(http.ResponseWriter, *http.Request)
+	handleGenerateQR(http.ResponseWriter, *http.Request)
 }
 
 func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +177,6 @@ func (s *Server) handleFetchUserURLHistory(w http.ResponseWriter, r *http.Reques
 		Count: len(urls),
 	})
 }
-
 
 func (s *Server) handleGenerateQR(w http.ResponseWriter, r *http.Request) {
 	shortCode := chi.URLParam(r, "shortCode")

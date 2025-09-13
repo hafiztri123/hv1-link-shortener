@@ -14,7 +14,7 @@ build:
 	@go build -o ./bin/${BINARY_NAME} ${MAIN_FILE}
 
 run:
-	@go run ${MAIN_FILE}
+	@air
 
 format:
 	@go fmt ./...

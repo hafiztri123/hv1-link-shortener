@@ -17,5 +17,5 @@ type CreateURLRequest struct {
 }
 
 type CreateURLResponse struct {
-	ShortCode string `json:"short_url"`
+	ShortCode string `json:"short_code"`
 }

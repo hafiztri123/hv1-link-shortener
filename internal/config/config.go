@@ -34,7 +34,7 @@ func Load() (*Config, error) {
 
 	jwt, ok := os.LookupEnv("JWT_SECRET")
 	if !ok {
-		errors = append(errors, "JWT_SECRET Envvironment variable not set")
+		errors = append(errors, "JWT_SECRET Environment variable not set")
 	}
 
 	convertedIdOffset, err := strconv.ParseUint(idOffset, 10, 64)

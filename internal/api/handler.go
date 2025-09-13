@@ -23,6 +23,7 @@ type Handler interface {
 	handleCreateURL(http.ResponseWriter, *http.Request)
 	handleFetchURL(http.ResponseWriter, *http.Request)
 	handleFetchUserURLHistory(http.ResponseWriter, *http.Request)
+	handleGenerateQR(http.ResponseWriter, *http.Request)
 }
 
 func (s *Server) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -175,4 +176,31 @@ func (s *Server) handleFetchUserURLHistory(w http.ResponseWriter, r *http.Reques
 		Data:  urls,
 		Count: len(urls),
 	})
+}
+
+func (s *Server) handleGenerateQR(w http.ResponseWriter, r *http.Request) {
+	shortCode := chi.URLParam(r, "shortCode")
+	if shortCode == "" {
+		response.Error(w, http.StatusBadRequest, "short_url is a required field")
+		return
+	}
+
+	longUrl, err := s.urlService.FetchLongURL(r.Context(), shortCode)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			response.Error(w, http.StatusNotFound, "Short URL not found")
+			return
+		}
+
+		response.Error(w, http.StatusInternalServerError, "Failed to fetch long URL")
+		return
+	}
+
+	qr, err := s.urlService.GenerateQRCode(longUrl)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Failed to generate qr code")
+		return
+	}
+
+	response.Success(w, "success generating qr code", http.StatusOK, qr)
 }

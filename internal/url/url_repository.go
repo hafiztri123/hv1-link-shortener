@@ -134,14 +134,14 @@ func (r *Repository) FindOrCreateShortCode_Bulk(ctx context.Context, longURLs []
 		}
 	}
 
-	placeholder := utils.SelectPlaceholderBuilder(len(longURLs), 2)
+	placeholder := utils.SelectPlaceholderBuilder(len(longURLs), 1)
 	selectQuery := fmt.Sprintf(`
 		SELECT id, short_code, long_url
 		FROM urls
-		WHERE user_id IS NOT DISTINCT FROM $1 AND long_url IN (%s)
+		WHERE long_url IN (%s)
 	`, placeholder)
 
-	args := []any{userId}
+	args := []any{}
 	args = append(args, utils.StringSliceToAny(longURLs)...)
 
 	rows, err := tx.QueryContext(ctx, selectQuery, args...)

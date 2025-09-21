@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
+psql -v ON_ERROR_STOP=1 --username "$DB_USER" --dbname "$DB_USER" <<-EOSQL
     SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = 'app_db') AS db_exists
     \gset
     \if :db_exists \else

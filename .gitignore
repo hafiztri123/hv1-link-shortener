@@ -26,6 +26,7 @@
 go.work
 CLAUDE.md
 tmp
+*.mmdb
 
 ### VisualStudioCode ###
 .vscode/*

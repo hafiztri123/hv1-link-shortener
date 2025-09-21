@@ -8,24 +8,53 @@ import (
 )
 
 type Config struct {
-	DatabaseURL string
-	RedisURL    string
-	IDOffset    uint64
-	SecretKey   string
+	DatabaseAddr string
+	RedisAddr    string
+	IDOffset     uint64
+	SecretKey    string
 }
 
 func Load() (*Config, error) {
 	errors := []string{}
-	dbURL, ok := os.LookupEnv("DATABASE_URL")
 
+	appUrl, ok := os.LookupEnv("APP_URL")
 	if !ok {
-		errors = append(errors, "DATABASE_URL Environment variable not set")
+		errors = append(errors, "APP_URL Environment variable not set")
 	}
 
-	redisURL, ok := os.LookupEnv("REDIS_URL")
+	dbPort, ok := os.LookupEnv("DB_PORT")
 	if !ok {
-		errors = append(errors, "REDIS_URL Environment variable not set")
+		errors = append(errors, "DB_PORT Environment variable not set")
 	}
+
+	dbTransactionName, ok := os.LookupEnv("DB_TRANSACTION_NAME")
+	if !ok {
+		errors = append(errors, "DB_TRANSACTION_NAME Environment variable not set")
+	}
+
+	dbUser, ok := os.LookupEnv("DB_USER")
+	if !ok {
+		errors = append(errors, "DB_USER Environment variable not set")
+	}
+
+	dbPassword, ok := os.LookupEnv("DB_PASSWORD")
+	if !ok {
+		errors = append(errors, "DB_PASSWORD Environment variable not set")
+	}
+
+	dbSsl, ok := os.LookupEnv("DB_SSL")
+	if !ok {
+		errors = append(errors, "DB_SSL Environment variable not set")
+	}
+
+	redisPort, ok := os.LookupEnv("REDIS_PORT")
+	if !ok {
+		errors = append(errors, "REDIS_PORT Environment variable not set")
+	}
+
+	dbAddr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", dbUser, dbPassword, appUrl, dbPort, dbTransactionName, dbSsl)
+
+	redisAddr := fmt.Sprintf("%s:%s", appUrl, redisPort)
 
 	idOffset, ok := os.LookupEnv("ID_OFFSET")
 	if !ok {
@@ -48,10 +77,10 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		DatabaseURL: dbURL,
-		RedisURL:    redisURL,
-		IDOffset:    convertedIdOffset,
-		SecretKey:   jwt,
+		DatabaseAddr: dbAddr,
+		RedisAddr:    redisAddr,
+		IDOffset:     convertedIdOffset,
+		SecretKey:    jwt,
 	}, nil
 
 }

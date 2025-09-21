@@ -35,8 +35,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	db := database.Connect(cfg.DatabaseURL)
-	redis, err := redis.NewClient(context.Background(), cfg.RedisURL, nil)
+	db := database.Connect(cfg.DatabaseAddr)
+	redis, err := redis.NewClient(context.Background(), cfg.RedisAddr, nil)
 
 	if err != nil {
 		slog.Error("Could not connect to redis", "error", err)

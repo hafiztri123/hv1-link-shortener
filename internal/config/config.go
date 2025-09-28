@@ -1,70 +1,49 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 )
 
 type Config struct {
-	RedisAddr string
+	RabbitMQAddr string
 	AnalyticsDBAddr string
-	StreamName string
-	ConsumerGroup string
-	ConsumerName string
-	BatchSize int64
+	QueueName string
+	WorkerCount int
+	BatchSize int
 	ProcessingDelay int
 }
 
 func Load() (*Config, error) {
-	requiredVars := map[string]string{
-		"APP_URL": os.Getenv("APP_URL"),
-		"DB_USER": os.Getenv("DB_USER"),
-		"DB_PASSWORD" : os.Getenv("DB_PASSWORD"),
-		"DB_ANALYTICS_NAME": os.Getenv("DB_ANALYTICS_NAME"),
-		"DB_PORT": os.Getenv("DB_PORT"),
-		"REDIS_PORT": os.Getenv("REDIS_PORT"),
+	workerCount, err := strconv.Atoi(getEnvOrDefault("WORKER_COUNT", "3"))
+	if err != nil {
+		return nil, err
 	}
 
-	for key, value := range requiredVars {
-		if value == "" {
-			return nil, fmt.Errorf("missing environment variable: %s", key)
-		}
+	batchSize, err := strconv.Atoi(getEnvOrDefault("BATCH_SIZE", "50"))
+	if err != nil {
+		return nil, err
 	}
 
-	dbSsl := GetEnvOrDefault("DB_SSL", "disable")
-	analyticsDBAddr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		requiredVars["DB_USER"],
-		requiredVars["DB_PASSWORD"],
-		requiredVars["APP_URL"],
-		requiredVars["DB_PORT"],
-		requiredVars["DB_ANALYTICS_NAME"],
-		dbSsl,
-	)
-
-	redisAddr := fmt.Sprintf("%s:%s", requiredVars["APP_URL"], requiredVars["REDIS_PORT"])
-
-	batchSize, _ := strconv.ParseInt(GetEnvOrDefault("WORKER_BATCH_SIZE", "100"), 10, 64)
-	processingDelay, _ := strconv.Atoi(GetEnvOrDefault("WORKER_PROCESSING_DELAY", "1"))
-
+	processingDelay, err := strconv.Atoi(getEnvOrDefault("PROCESSING_DELAY", "1"))
+	if err != nil {
+		return nil, err
+	}
+	
 	return &Config{
-		RedisAddr: redisAddr,
-		AnalyticsDBAddr: analyticsDBAddr,
-		StreamName: GetEnvOrDefault("REDIS_STREAM_NAME", "clicks_stream"),
-		ConsumerGroup: GetEnvOrDefault("CONSUME_GROUP", "analytics_workers"),
-		ConsumerName: GetEnvOrDefault("CONSUMER_NAME", "worker_1"),
+		RabbitMQAddr: getEnvOrDefault("RABBITMQ_ADDR", "amqp://guest:guest@localhost:5672/"),
+		AnalyticsDBAddr: getEnvOrDefault("ANALYTICS_DB", "analytics_db"),
+		QueueName: getEnvOrDefault("CLICKS_QUEUE", "click_events"),
+		WorkerCount: workerCount,
 		BatchSize: batchSize,
 		ProcessingDelay: processingDelay,
+
 	}, nil
-
-
-
-
 
 }
 
-func GetEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
+func getEnvOrDefault(key, defaultValue string) string {
+	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
 

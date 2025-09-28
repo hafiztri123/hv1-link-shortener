@@ -1,0 +1,2 @@
+ALTER TABLE urls DROP CONSTRAINT fk_user_id;
+ALTER TABLE urls DROP COLUMN user_id;

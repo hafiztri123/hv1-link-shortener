@@ -22,7 +22,7 @@ func TestLoad(t *testing.T) {
 		cfg, err := Load()
 
 		assert.NoError(t, err)
-		assert.Equal(t, "postgres://testuser:testpass@localhost:5432/testdb?ssl=disable", cfg.DatabaseAddr)
+		assert.Equal(t, "postgres://testuser:testpass@localhost:5432/testdb?sslmode=disable", cfg.DatabaseAddr)
 		assert.Equal(t, "localhost:6379", cfg.RedisAddr)
 		assert.Equal(t, uint64(123), cfg.IDOffset)
 		assert.Equal(t, "jwt_secret", cfg.SecretKey)

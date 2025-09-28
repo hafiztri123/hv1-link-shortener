@@ -5,7 +5,7 @@ import (
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
-	"hafiztri123/app-link-shortener/migrations"
+	"hpj/hv1-link-shortener/shared/migrations"
 	"testing"
 
 	"github.com/go-redis/redismock/v8"

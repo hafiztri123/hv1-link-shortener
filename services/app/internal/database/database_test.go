@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"hafiztri123/app-link-shortener/internal/url"
-	"hafiztri123/app-link-shortener/migrations"
+	"hpj/hv1-link-shortener/shared/migrations"
 	"testing"
 	"time"
 

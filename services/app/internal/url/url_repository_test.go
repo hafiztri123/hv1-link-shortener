@@ -1,13 +1,13 @@
 package url
 
 import (
+	"hpj/hv1-link-shortener/shared/migrations"
 	"sync"
 	"testing"
 
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/user"
 	_ "hafiztri123/app-link-shortener/internal/utils"
-	"hafiztri123/app-link-shortener/migrations"
 
 	_ "github.com/mattn/go-sqlite3" // Driver for in-memory SQLite
 	"github.com/stretchr/testify/assert"

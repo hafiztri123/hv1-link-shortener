@@ -16,7 +16,7 @@ type Config struct {
 func Load() (*Config, error) {
 	appUrl := utils.GetEnvOrDefault("APP_URL", "localhost")
 
-	databaseAddr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?ssl=%s",
+	databaseAddr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		utils.GetEnvOrDefault("DB_USER", "admin"),
 		utils.GetEnvOrDefault("DB_PASSWORD", "admin"),
 		appUrl,

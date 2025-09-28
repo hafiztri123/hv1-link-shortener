@@ -5,57 +5,74 @@ ifneq (,$(wildcard .env))
 	export
 endif
 
-BINARY_NAME=app-link-shortener
-MAIN_FILE=cmd/server/main.go
+BINARY_NAME=hv1-link-shortener
+TRANSACTION_DATABASE_URL := postgres://$(DB_USER):$(DB_PASSWORD)@$(APP_URL):$(DB_PORT)/$(TRANSACTION_DB)?sslmode=$(DB_SSL)
+
+WORKER_PATH=./services/worker/server/cmd
+WORKER_BIN=./bin/worker
+
+APP_PATH=./services/app/server/cmd
+APP_BIN=./bin/app
 
 
-build:
-	@echo "Building binary..."
-	@go build -o ./bin/${BINARY_NAME} ${MAIN_FILE}
 
-run:
-	@air
+build-all:
+	@echo "Building app services..."
+	@go build -o $(APP_BIN) $(APP_PATH)
+	@echo "Building worker services..."
+	@go build -o $(WORKER_BIN) $(WORKER_PATH)
+
+
+run-all:
+	build-all
+	@echo "Running app services and worker services"
+	@$(APP_BIN) & $(WORKER_BIN) & wait
 
 format:
 	@go fmt ./...
 	@go vet ./...
 
-migrate-up:
-	@migrate -database "$(DATABASE_URL)" -path migrations up
+t-db-up:
+	@migrate -database "$(TRANSACTION_DATABASE_URL)" -path migrations up
 
-migrate-version:
-	@migrate -database "$(DATABASE_URL)" -path migrations version
+t-db-ver:
+	@migrate -database "$(TRANSACTION_DATABASE_URL)" -path migrations version
 
-migrate-down:
-	@migrate -database "$(DATABASE_URL)" -path migrations down
+t-db-down:
+	@migrate -database "$(TRANSACTION_DATABASE_URL)" -path migrations down
 
-migrate-force:
-	@migrate -database "$(DATABASE_URL)" -path migrations force $(v)
+t-db-force:
+	@migrate -database "$(TRANSACTION_DATABASE_URL)" -path migrations force $(v)
 
-migrate-create:
-	@migrate create -ext sql -dir ./migrations -seq $(v)
+db-create:
+	@migrate create -ext sql -dir ./shared/migrations -seq $(v)
 
 
-test-setup:
-	@migrate -database "$(DATABASE_URL_TEST)" -path migrations down -all
-	@migrate -database "$(DATABASE_URL_TEST)" -path migrations up
-
-test-coverage:
-	@go test -coverprofile=coverage.out ./internal/...
+test-coverage-app:
+	@go test -coverprofile=coverage.out ./services/app/internal/...
 	@go tool cover -func=coverage.out
 
-test-integration:
-	@go test -v --tags=integration ./...
+test-coverage-worker:
+	@go test -coverprofile=coverage.out ./services/worker/internal/...
+	@go tool cover -func=coverage.out
+
+test-coverage:
+	@go test -coverprofile=coverage.out ./...
+	@go tool cover -func=coverage.out
+
+
+test-html-app:
+	@go test -coverprofile=coverage.out ./services/app/internal/...
+	@go tool cover -html=coverage.out
+
+test-html-worker:
+	@go test -coverprofile=coverage.out ./services/worker/internal/...
+	@go tool cover -html=coverage.out
 
 test-html:
 	@go test -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out
 
-branch-review:
-	@git branch --merged main | grep -v -E '^\*|main|master$$'
-
-branch-prune:
-	@git branch --merged main | grep -v -E '^\*|main|master$$' | xargs git branch -d
 
 
 

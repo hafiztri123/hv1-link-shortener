@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/oschwald/maxminddb-golang"
 )
 
 func main() {
@@ -51,7 +52,13 @@ func main() {
 	userRepo := user.NewRepository(db)
 	userService := user.NewService(db, userRepo, tokenService)
 
-	server := api.NewServer(db, redis, urlService, userService, tokenService)
+	mmdb, err := maxminddb.Open("../../../../GeoLite2-City.mmdb")
+	if err != nil {
+		slog.Error("couldn't find geolite mmdb", "err", err)
+		os.Exit(1)
+	}
+
+	server := api.NewServer(db, redis, urlService, userService, tokenService, mmdb)
 	router := server.RegisterRoutes()
 
 	defer db.Close()

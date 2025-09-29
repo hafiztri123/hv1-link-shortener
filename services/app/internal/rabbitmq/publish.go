@@ -10,7 +10,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func (r *RabbitMQ) PublishClickEvent(ctx context.Context, clickEvent models.Click) error {
+func (r *RabbitMQ) PublishClickEvent(ctx context.Context, clickEvent *models.Click) error {
 	body, err := json.Marshal(clickEvent)
 	if err != nil {
 		slog.Error("failed to marshal click event", "Err", err)

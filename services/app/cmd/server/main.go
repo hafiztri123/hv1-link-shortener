@@ -53,7 +53,7 @@ func main() {
 	userRepo := user.NewRepository(db)
 	userService := user.NewService(db, userRepo, tokenService)
 
-	mmdb, err := maxminddb.Open("../../../../GeoLite2-City.mmdb")
+	mmdb, err := maxminddb.Open("GeoLite2-City.mmdb")
 	if err != nil {
 		slog.Error("couldn't find geolite mmdb", "err", err)
 		os.Exit(1)

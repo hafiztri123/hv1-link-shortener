@@ -133,7 +133,10 @@ func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if value, ok := r.Context().Value(shared.ClickDataKey).(models.Click); ok {
+	slog.Info("redirecting to long URL", "short_code", shortCode, "long_url", longURL)
+
+	if value, ok := r.Context().Value(shared.ClickDataKey).(*models.Click); ok {
+		slog.Info("publishing click event", "click", value)
 		go func ()  {
 			ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 			defer cancel()
@@ -141,6 +144,8 @@ func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
 				slog.Error("failed to publish click event", "error", err)
 			}
 		}()
+	} else {
+		slog.Info("click data not found in context")
 	}
 
 	http.Redirect(w, r, longURL, http.StatusMovedPermanently)

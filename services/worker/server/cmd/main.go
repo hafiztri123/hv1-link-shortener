@@ -22,8 +22,7 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		slog.Error("error initializing slog for logging purposes", "err", err)
-		os.Exit(1)
+		slog.Warn("error initializing env", "err", err)
 	}
 
 	cfg := config.Load()

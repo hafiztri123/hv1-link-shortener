@@ -46,6 +46,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Use(RedisRateLimiter(s.redis, 20, 1*time.Minute))
 	r.Use(metrics.PrometheusMiddleware)
+	r.Use(MetadataMiddleware(s.geoDb))
 
 	r.Route("/api/v1", func(v1 chi.Router) {
 		v1.Get("/health", s.healthCheckHandler)
@@ -54,7 +55,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 		v1.Handle("/metrics", promhttp.Handler())
 
 		v1.Route("/url", func(url chi.Router) {
-			url.Use(MetadataMiddleware(s.geoDb))
 
 			url.Get("/{shortCode}", s.handleFetchURL)
 			url.Get("/{shortCode}/qr", s.handleGenerateQR)

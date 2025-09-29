@@ -28,21 +28,7 @@ func NewRabbitMQ(addr, queueLabel string) (*RabbitMQ, error) {
 		return nil, err
 	}
 
-	_, err = ch.QueueDeclare(
-		queueLabel,
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
 
-	if err != nil {
-		slog.Error("failed to declare queue")
-		ch.Close()
-		conn.Close()
-		return nil, err
-	}
 
 	return &RabbitMQ{
 		conn: conn,

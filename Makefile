@@ -6,7 +6,7 @@ ifneq (,$(wildcard .env))
 endif
 
 BINARY_NAME=hv1-link-shortener
-TRANSACTION_DATABASE_URL := postgres://$(DB_USER):$(DB_PASSWORD)@$(APP_URL):$(DB_PORT)/$(TRANSACTION_DB)?sslmode=$(DB_SSL)
+TRANSACTION_DATABASE_URL := postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(TRANSACTION_DB)?sslmode=$(DB_SSL)
 
 WORKER_PATH=./services/worker/server/cmd
 WORKER_BIN=./bin/worker

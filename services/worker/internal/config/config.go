@@ -16,7 +16,7 @@ func Load() *Config {
 	rabbitmqAddr := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		utils.GetEnvOrDefault("RABBITMQ_USER", "guest"),
 		utils.GetEnvOrDefault("RABBITMQ_PASSWORD", "guest"),
-		utils.GetEnvOrDefault("APP_URL", "localhost"),
+		utils.GetEnvOrDefault("RABBITMQ_HOST", "localhost"),
 		utils.GetEnvOrDefault("RABBITMQ_PORT", "5672"),
 	)
 
@@ -24,7 +24,7 @@ func Load() *Config {
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		utils.GetEnvOrDefault("DB_USER", "admin"),
 		utils.GetEnvOrDefault("DB_PASSWORD", "admin"),
-		utils.GetEnvOrDefault("APP_URL", "localhost"),
+		utils.GetEnvOrDefault("DB_HOST", "localhost"),
 		utils.GetEnvOrDefault("DB_PORT", "5432"),
 		utils.GetEnvOrDefault("ANALYTICS_DB", "analytics_db"),
 		utils.GetEnvOrDefault("DB_SSL", "disable"),

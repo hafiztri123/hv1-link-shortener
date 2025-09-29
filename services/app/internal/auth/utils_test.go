@@ -44,3 +44,20 @@ func TestGetUserFromContext(t *testing.T) {
 		})
 	}
 }
+
+func TestValueNotFoundErr_ErrorMethod(t *testing.T) {
+	err := &ValueNotFoundErr{Action: "test action"}
+	result := err.Error()
+	expected := "Unexpected error has occured, please try again"
+	assert.Equal(t, expected, result)
+}
+
+func TestValueNotFoundErr_IsMethod(t *testing.T) {
+	err1 := &ValueNotFoundErr{Action: "action1"}
+	err2 := &ValueNotFoundErr{Action: "action2"}
+
+	assert.True(t, err1.Is(err2))
+
+	otherErr := assert.AnError
+	assert.False(t, err1.Is(otherErr))
+}

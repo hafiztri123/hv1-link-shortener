@@ -1,19 +1,16 @@
 package rabbitmq
 
 import (
-
 	"log/slog"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-
 type RabbitMQ struct {
-	conn *amqp.Connection
-	channel *amqp.Channel
+	conn       *amqp.Connection
+	channel    *amqp.Channel
 	queueLabel string
 }
-
 
 func NewRabbitMQ(addr, queueLabel string) (*RabbitMQ, error) {
 	conn, err := amqp.Dial(addr)
@@ -28,16 +25,12 @@ func NewRabbitMQ(addr, queueLabel string) (*RabbitMQ, error) {
 		return nil, err
 	}
 
-
-
 	return &RabbitMQ{
-		conn: conn,
-		channel: ch,
+		conn:       conn,
+		channel:    ch,
 		queueLabel: queueLabel,
 	}, nil
 }
-
-
 
 func (r *RabbitMQ) Close() error {
 	if r.channel != nil {

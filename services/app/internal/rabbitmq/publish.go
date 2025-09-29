@@ -25,9 +25,9 @@ func (r *RabbitMQ) PublishClickEvent(ctx context.Context, clickEvent *models.Cli
 		false,
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
-			ContentType: "application/json",
-			Body: body,
-			Timestamp: time.Now(),
+			ContentType:  "application/json",
+			Body:         body,
+			Timestamp:    time.Now(),
 		},
 	)
 

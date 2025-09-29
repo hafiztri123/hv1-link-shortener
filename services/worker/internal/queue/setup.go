@@ -19,7 +19,7 @@ func setupDeadLetterQueue(ch *amqp.Channel, queueLabel string) error {
 	)
 
 	if err != nil {
-		slog.Error("error exchange declare for dead letter exchange", "error", err )
+		slog.Error("error exchange declare for dead letter exchange", "error", err)
 		return err
 	}
 
@@ -58,7 +58,6 @@ func setupRetryQueue(ch *amqp.Channel, queueLabel string) error {
 	retryQueueLabel := queueLabel + ".retry"
 	retryExchangeLabel := queueLabel + ".retry.exchange"
 
-
 	err := ch.ExchangeDeclare(
 		retryExchangeLabel,
 		"direct",
@@ -81,8 +80,8 @@ func setupRetryQueue(ch *amqp.Channel, queueLabel string) error {
 		false,
 		false,
 		amqp.Table{
-			"x-message-ttl" : 30000,
-			"x-dead-letter-exchange": "",
+			"x-message-ttl":             30000,
+			"x-dead-letter-exchange":    "",
 			"x-dead-letter-routing-key": queueLabel,
 		},
 	)

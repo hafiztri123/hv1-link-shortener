@@ -5,9 +5,8 @@ import (
 	"hpj/hv1-link-shortener/shared/utils"
 )
 
-
 type Config struct {
-	RabbitMQAddr string
+	RabbitMQAddr    string
 	AnalyticsDBAddr string
 	ClickQueueLabel string
 }
@@ -30,8 +29,8 @@ func Load() *Config {
 		utils.GetEnvOrDefault("DB_SSL", "disable"),
 	)
 	return &Config{
-		RabbitMQAddr: rabbitmqAddr,
+		RabbitMQAddr:    rabbitmqAddr,
 		ClickQueueLabel: utils.GetEnvOrDefault("CLICK_QUEUE_LABEL", "click_event"),
 		AnalyticsDBAddr: analyticsDbAddr,
 	}
-} 
+}

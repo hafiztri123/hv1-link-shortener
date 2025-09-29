@@ -137,8 +137,8 @@ func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
 
 	if value, ok := r.Context().Value(shared.ClickDataKey).(*models.Click); ok {
 		slog.Info("publishing click event", "click", value)
-		go func ()  {
-			ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			if err := s.rabbitMq.PublishClickEvent(ctx, value); err != nil {
 				slog.Error("failed to publish click event", "error", err)

@@ -8,10 +8,9 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-
 type DLQConsumer struct {
-	conn *amqp.Connection
-	ch *amqp.Channel
+	conn       *amqp.Connection
+	ch         *amqp.Channel
 	queueLabel string
 }
 
@@ -30,8 +29,8 @@ func NewDLQConsumer(addr, queueLabel string) (*DLQConsumer, error) {
 	}
 
 	return &DLQConsumer{
-		conn: conn,
-		ch: ch,
+		conn:       conn,
+		ch:         ch,
 		queueLabel: queueLabel + ".dlq",
 	}, nil
 }
@@ -45,7 +44,6 @@ func (c *DLQConsumer) StartConsuming(ctx context.Context) error {
 		false,
 		false,
 		nil,
-	
 	)
 
 	if err != nil {
@@ -55,9 +53,9 @@ func (c *DLQConsumer) StartConsuming(ctx context.Context) error {
 
 	for {
 		select {
-		case <- ctx.Done():
+		case <-ctx.Done():
 			return ctx.Err()
-		
+
 		case msg, ok := <-msgs:
 			if !ok {
 				slog.Error("error in getting value from channel")

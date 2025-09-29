@@ -8,20 +8,19 @@ import (
 	"strings"
 )
 
-
 type Repository struct {
 	db *sql.DB
 }
 
-func NewRepository (db *sql.DB) *Repository {
+func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
 		db: db,
 	}
 }
 
 func (r *Repository) InsertMetadata(ctx context.Context, data *models.Click) error {
-	stmt := 
-	`INSERT INTO clicks 
+	stmt :=
+		`INSERT INTO clicks 
 	(
 	url_path,
 	ip_address, 
@@ -34,8 +33,8 @@ func (r *Repository) InsertMetadata(ctx context.Context, data *models.Click) err
 	city, 
 	timestamp
 	) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
-	 
-	_, err := r.db.ExecContext(ctx, stmt, 
+
+	_, err := r.db.ExecContext(ctx, stmt,
 		data.Path,
 		data.IPAddress,
 		data.Referer,
@@ -57,7 +56,7 @@ func (r *Repository) InsertMetadata(ctx context.Context, data *models.Click) err
 
 func (r *Repository) InsertMetadataBatch(ctx context.Context, datas []*models.Click) error {
 	value := make([]string, 0, len(datas))
-	args := make([]any, 0, len(datas) * 10)
+	args := make([]any, 0, len(datas)*10)
 
 	for i, data := range datas {
 		value = append(value, fmt.Sprintf(
@@ -71,9 +70,8 @@ func (r *Repository) InsertMetadataBatch(ctx context.Context, datas []*models.Cl
 			i*10+7,
 			i*10+8,
 			i*10+9,
-			i*10+10, 
-			))
-		
+			i*10+10,
+		))
 
 		args = append(args,
 			data.Path,
@@ -90,7 +88,7 @@ func (r *Repository) InsertMetadataBatch(ctx context.Context, datas []*models.Cl
 	}
 
 	query := fmt.Sprintf(
-			`INSERT INTO clicks 
+		`INSERT INTO clicks 
 	(
 	url_path,
 	ip_address, 
@@ -111,4 +109,3 @@ func (r *Repository) InsertMetadataBatch(ctx context.Context, datas []*models.Cl
 
 	return nil
 }
-

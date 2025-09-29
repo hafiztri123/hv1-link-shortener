@@ -7,11 +7,11 @@ import (
 )
 
 type Config struct {
-	DatabaseAddr string
-	RedisAddr    string
-	IDOffset     uint64
-	SecretKey    string
-	RabbitMQAddr string
+	DatabaseAddr    string
+	RedisAddr       string
+	IDOffset        uint64
+	SecretKey       string
+	RabbitMQAddr    string
 	ClickQueueLabel string
 }
 
@@ -26,13 +26,12 @@ func Load() (*Config, error) {
 		utils.GetEnvOrDefault("DB_SSL", "disable"),
 	)
 
-	rabbitmqAddr:= fmt.Sprintf("amqp://%s:%s@%s:%s",
+	rabbitmqAddr := fmt.Sprintf("amqp://%s:%s@%s:%s",
 		utils.GetEnvOrDefault("RABBITMQ_USER", "guest"),
 		utils.GetEnvOrDefault("RABBITMQ_PASSWORD", "guest"),
 		utils.GetEnvOrDefault("RABBITMQ_HOST", "localhost"),
 		utils.GetEnvOrDefault("RABBITMQ_PORT", "5672"),
 	)
-
 
 	redisAddr := fmt.Sprintf("%s:%s", utils.GetEnvOrDefault("REDIS_HOST", "localhost"), utils.GetEnvOrDefault("REDIS_PORT", "6379"))
 
@@ -43,11 +42,11 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		DatabaseAddr: databaseAddr,
-		RedisAddr:    redisAddr,
-		IDOffset:     convertedIdOffset,
-		SecretKey:    utils.GetEnvOrDefault("JWT", "secret"),
-		RabbitMQAddr: rabbitmqAddr,
+		DatabaseAddr:    databaseAddr,
+		RedisAddr:       redisAddr,
+		IDOffset:        convertedIdOffset,
+		SecretKey:       utils.GetEnvOrDefault("JWT", "secret"),
+		RabbitMQAddr:    rabbitmqAddr,
 		ClickQueueLabel: utils.GetEnvOrDefault("CLICK_QUEUE_LABEL", "click_event"),
 	}, nil
 

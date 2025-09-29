@@ -30,7 +30,6 @@ func main() {
 	db := database.Connect(cfg.AnalyticsDBAddr)
 	metadataRepository := metadata.NewRepository(db)
 
-
 	consumer, err := queue.NewConsumer(cfg.RabbitMQAddr, cfg.ClickQueueLabel, metadataRepository)
 
 	if err != nil {
@@ -54,18 +53,18 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go func () {
+	go func() {
 		errChan <- consumer.StartConsuming(ctx)
 	}()
 
-	go func () {
+	go func() {
 		errChan <- dlqConsumer.StartConsuming(ctx)
 	}()
 
 	select {
-	case err := <- errChan:
+	case err := <-errChan:
 		slog.Error("Consumer error", "error", err)
-	case sig := <- sigChan:
+	case sig := <-sigChan:
 		slog.Info("shutting down", "signal", sig)
 		cancel()
 	}

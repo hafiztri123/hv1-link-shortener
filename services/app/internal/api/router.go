@@ -26,7 +26,7 @@ type Server struct {
 	userService  user.UserService
 	tokenService *auth.TokenService
 	geoDb        *maxminddb.Reader
-	rabbitMq 	*rabbitmq.RabbitMQ
+	rabbitMq     *rabbitmq.RabbitMQ
 }
 
 func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService, geoDb *maxminddb.Reader, rabbitMq *rabbitmq.RabbitMQ) *Server {
@@ -37,7 +37,7 @@ func NewServer(db DB, redis *redis.Client, urlService url.URLService, userServic
 		userService:  userService,
 		tokenService: ts,
 		geoDb:        geoDb,
-		rabbitMq: rabbitMq,
+		rabbitMq:     rabbitMq,
 	}
 }
 

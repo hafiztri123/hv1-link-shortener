@@ -17,9 +17,9 @@ const (
 )
 
 type Consumer struct {
-    conn    *amqp.Connection
-    channel *amqp.Channel
-    queueLabel   string
+	conn               *amqp.Connection
+	channel            *amqp.Channel
+	queueLabel         string
 	metadataRepository *metadata.Repository
 }
 
@@ -58,36 +58,33 @@ func NewConsumer(addr, queueLabel string, metadataRepository *metadata.Repositor
 		false,
 		false,
 		amqp.Table{
-			"x-dead-letter-exchange": queueLabel + ".dlx",
+			"x-dead-letter-exchange":    queueLabel + ".dlx",
 			"x-dead-letter-routing-key": queueLabel + ".dlq",
 		},
 	)
 
-	 if err != nil {
-        ch.Close()
-        conn.Close()
+	if err != nil {
+		ch.Close()
+		conn.Close()
 		slog.Error("failed to queue declare with dead letter mechanism", "error", err)
-        return nil, err
-    }
+		return nil, err
+	}
 
 	err = ch.Qos(1, 0, false)
 
 	if err != nil {
-        ch.Close()
-        conn.Close()
+		ch.Close()
+		conn.Close()
 		slog.Error("failed to set quality of service", "error", err)
-        return nil, err
-    }
-	
-
+		return nil, err
+	}
 
 	return &Consumer{
-		conn: conn,
-		channel: ch,
-		queueLabel: queueLabel,
+		conn:               conn,
+		channel:            ch,
+		queueLabel:         queueLabel,
 		metadataRepository: metadataRepository,
 	}, nil
-
 
 }
 
@@ -109,9 +106,9 @@ func (c *Consumer) StartConsuming(ctx context.Context) error {
 
 	for {
 		select {
-		case <- ctx.Done():
+		case <-ctx.Done():
 			return ctx.Err()
-		
+
 		case msg, ok := <-msgs:
 			if !ok {
 				slog.Error("error in getting value from channel")
@@ -131,10 +128,10 @@ func (c *Consumer) handleMetadataMessage(msg amqp.Delivery) {
 
 	if err != nil {
 		slog.Error("failed to handle data", "err", err)
-		return 
+		return
 	}
 
-	contextTimeout, cancel := context.WithTimeout(context.Background(), 5 *time.Second)
+	contextTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := c.metadataRepository.InsertMetadata(contextTimeout, data); err != nil {
@@ -172,10 +169,10 @@ func (c *Consumer) sendToRetryQueue(msg amqp.Delivery, retryCount int32) error {
 		false,
 		false,
 		amqp.Publishing{
-			ContentType: msg.ContentType,
-			Body: msg.Body,
+			ContentType:  msg.ContentType,
+			Body:         msg.Body,
 			DeliveryMode: amqp.Persistent,
-			Headers: headers,
+			Headers:      headers,
 		},
 	)
 }

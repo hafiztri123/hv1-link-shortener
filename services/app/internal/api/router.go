@@ -3,6 +3,7 @@ package api
 import (
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/metrics"
+	"hafiztri123/app-link-shortener/internal/rabbitmq"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
 	"net/http"
@@ -25,6 +26,7 @@ type Server struct {
 	userService  user.UserService
 	tokenService *auth.TokenService
 	geoDb        *maxminddb.Reader
+	rabbitMq 	*rabbitmq.RabbitMQ
 }
 
 func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService, geoDb *maxminddb.Reader) *Server {

@@ -11,6 +11,7 @@ type Config struct {
 	RedisAddr    string
 	IDOffset     uint64
 	SecretKey    string
+	RabbitMQAddr string
 }
 
 func Load() (*Config, error) {
@@ -25,6 +26,14 @@ func Load() (*Config, error) {
 		utils.GetEnvOrDefault("DB_SSL", "disable"),
 	)
 
+	rabbitmqAddr:= fmt.Sprintf("amqp://%s:%s@%s:%s",
+		utils.GetEnvOrDefault("RABBITMQ_USER", "guest"),
+		utils.GetEnvOrDefault("RABBITMQ_PASSWORD", "guest"),
+		appUrl,
+		utils.GetEnvOrDefault("RABBITMQ_PORT", "5672"),
+	)
+
+
 	redisAddr := fmt.Sprintf("%s:%s", appUrl, utils.GetEnvOrDefault("REDIS_PORT", "6379"))
 
 	convertedIdOffset, err := strconv.ParseUint(utils.GetEnvOrDefault("ID_OFFSET", "100000000"), 10, 64)
@@ -38,6 +47,7 @@ func Load() (*Config, error) {
 		RedisAddr:    redisAddr,
 		IDOffset:     convertedIdOffset,
 		SecretKey:    utils.GetEnvOrDefault("JWT", "secret"),
+		RabbitMQAddr: rabbitmqAddr,
 	}, nil
 
 }

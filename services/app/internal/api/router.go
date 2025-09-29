@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
+	"github.com/oschwald/maxminddb-golang"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -23,10 +24,18 @@ type Server struct {
 	urlService   url.URLService
 	userService  user.UserService
 	tokenService *auth.TokenService
+	geoDb		 *maxminddb.Reader
 }
 
-func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService) *Server {
-	return &Server{db: db, redis: redis, urlService: urlService, userService: userService, tokenService: ts}
+func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService, geoDb *maxminddb.Reader) *Server {
+	return &Server{
+		db: db, 
+		redis: redis, 
+		urlService: urlService, 
+		userService: userService, 
+		tokenService: ts, 
+		geoDb: geoDb,
+	}
 }
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -38,20 +47,27 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(metrics.PrometheusMiddleware)
 	r.Route("/api/v1", func(v1 chi.Router) {
 		v1.Get("/health", s.healthCheckHandler)
-		v1.Get("/url/{shortCode}", s.handleFetchURL)
-		v1.Get("/url/{shortCode}/qr", s.handleGenerateQR)
+
 		v1.Post("/user/register", s.handleRegister)
 		v1.Post("/user/login", s.handleLogin)
 		v1.Handle("/metrics", promhttp.Handler())
 
+		v1.Route("/url", func(url chi.Router) {
+			url.Use(MetadataMiddleware(s.geoDb))
+			url.Get("/url/{shortCode}", s.handleFetchURL)
+			url.Get("/url/{shortCode}/qr", s.handleGenerateQR)
+
+			
+		})
+
 		v1.Route("/url", func(protected chi.Router) {
-			protected.Use(auth.AuthMiddleware(s.tokenService, true))
+			protected.Use(AuthMiddleware(s.tokenService, true))
 			protected.Post("/shorten", s.handleCreateURL)
 			protected.Post("/shorten/bulk", s.handleCreateURL_Bulk)
 		})
 
 		v1.Route("/user", func(protected chi.Router) {
-			protected.Use(auth.AuthMiddleware(s.tokenService, false))
+			protected.Use(AuthMiddleware(s.tokenService, false))
 			protected.Get("/history", s.handleFetchUserURLHistory)
 		})
 	})

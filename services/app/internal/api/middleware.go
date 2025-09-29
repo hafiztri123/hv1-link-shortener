@@ -19,8 +19,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-
-
 func RateLimiter(r rate.Limit, b int) func(http.Handler) http.Handler {
 	limiter := rate.NewLimiter(r, b)
 
@@ -81,8 +79,6 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-
-
 func AuthMiddleware(ts *auth.TokenService, permissive bool) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +132,6 @@ func MetadataMiddleware(db *maxminddb.Reader) func(http.Handler) http.Handler {
 
 			ip := net.ParseIP(ipStr)
 
-
 			ua := useragent.Parse(r.Header.Get("User-Agent"))
 			var deviceType string
 
@@ -162,18 +157,18 @@ func MetadataMiddleware(db *maxminddb.Reader) func(http.Handler) http.Handler {
 
 			clickData := &models.Click{
 				Timestamp: time.Now().UTC(),
-				Path: r.URL.Path,
+				Path:      r.URL.Path,
 				IPAddress: ipStr,
-				Referer: r.Header.Get("Referer"),
+				Referer:   r.Header.Get("Referer"),
 				UserAgent: r.Header.Get("User-Agent"),
-				Device: deviceType,
-				OS: ua.OS,
-				Browser: ua.Name,
-				Country: country,
-				City: city,
+				Device:    deviceType,
+				OS:        ua.OS,
+				Browser:   ua.Name,
+				Country:   country,
+				City:      city,
 			}
 
-			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(),shared.ClickDataKey, clickData)))
+			next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), shared.ClickDataKey, clickData)))
 		})
 	}
 }

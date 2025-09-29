@@ -24,17 +24,17 @@ type Server struct {
 	urlService   url.URLService
 	userService  user.UserService
 	tokenService *auth.TokenService
-	geoDb		 *maxminddb.Reader
+	geoDb        *maxminddb.Reader
 }
 
 func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService, geoDb *maxminddb.Reader) *Server {
 	return &Server{
-		db: db, 
-		redis: redis, 
-		urlService: urlService, 
-		userService: userService, 
-		tokenService: ts, 
-		geoDb: geoDb,
+		db:           db,
+		redis:        redis,
+		urlService:   urlService,
+		userService:  userService,
+		tokenService: ts,
+		geoDb:        geoDb,
 	}
 }
 
@@ -57,7 +57,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 			url.Get("/url/{shortCode}", s.handleFetchURL)
 			url.Get("/url/{shortCode}/qr", s.handleGenerateQR)
 
-			
 		})
 
 		v1.Route("/url", func(protected chi.Router) {

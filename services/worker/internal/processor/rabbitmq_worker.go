@@ -9,13 +9,13 @@ import (
 )
 
 type RabbitMQWorker struct {
-	conn *amqp.Connection
-	queueName string
+	conn        *amqp.Connection
+	queueName   string
 	workerCount int
-	batchSize int
-	delay time.Duration
-	done chan struct{}
-	wg sync.WaitGroup
+	batchSize   int
+	delay       time.Duration
+	done        chan struct{}
+	wg          sync.WaitGroup
 }
 
 func NewRabbitMQWorker(rabbitAddr, queueName string, workerCount, batchSize int, delay time.Duration) (*RabbitMQWorker, error) {
@@ -26,12 +26,12 @@ func NewRabbitMQWorker(rabbitAddr, queueName string, workerCount, batchSize int,
 	}
 
 	return &RabbitMQWorker{
-		conn: conn,
-		queueName: queueName,
+		conn:        conn,
+		queueName:   queueName,
 		workerCount: workerCount,
-		batchSize: batchSize,
-		delay: delay,
-		done: make(chan struct{}),
+		batchSize:   batchSize,
+		delay:       delay,
+		done:        make(chan struct{}),
 	}, nil
 }
 
@@ -42,7 +42,6 @@ func NewRabbitMQWorker(rabbitAddr, queueName string, workerCount, batchSize int,
 // 		"batch_size", r.batchSize,
 // 	)
 // }
-
 
 // func (r *RabbitMQWorker) worker(ctx context.Context, workerID int) {
 // 	defer r.wg.Done()
@@ -95,7 +94,7 @@ func NewRabbitMQWorker(rabbitAddr, queueName string, workerCount, batchSize int,
 // 				//TODO
 // 			}
 // 			return
-		
+
 // 		case <-ctx.Done():
 // 			return
 
@@ -106,13 +105,10 @@ func NewRabbitMQWorker(rabbitAddr, queueName string, workerCount, batchSize int,
 // 			}
 // 			//TODO
 
-		
 // 		case <-ticker.C:
-// 			//TODO 
+// 			//TODO
 // 		}
 
 // 	}
 
 // }
-		
-

@@ -1,6 +1,5 @@
 package models
 
-
 type GeoIPCity struct {
 	Country struct {
 		ISOCode string `maxminddb:"iso_code"`

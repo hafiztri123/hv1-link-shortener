@@ -25,18 +25,13 @@ func Load() (*Config, error) {
 		utils.GetEnvOrDefault("DB_SSL", "disable"),
 	)
 
-
-
-
 	redisAddr := fmt.Sprintf("%s:%s", appUrl, utils.GetEnvOrDefault("REDIS_PORT", "6379"))
 
-	
 	convertedIdOffset, err := strconv.ParseUint(utils.GetEnvOrDefault("ID_OFFSET", "100000000"), 10, 64)
 
 	if err != nil {
 		return nil, err
 	}
-
 
 	return &Config{
 		DatabaseAddr: databaseAddr,

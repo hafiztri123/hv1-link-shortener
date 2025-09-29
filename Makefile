@@ -14,6 +14,10 @@ WORKER_BIN=./bin/worker
 APP_PATH=./services/app/server/cmd
 APP_BIN=./bin/app
 
+SHARED_DIRECTORY=./shared
+APP_DIRECTORY=./services/app
+WORKER_DIRECTORY=./services/worker
+
 
 
 build-all:
@@ -28,9 +32,20 @@ run-all:
 	@echo "Running app services and worker services"
 	@$(APP_BIN) & $(WORKER_BIN) & wait
 
-format:
-	@go fmt ./...
-	@go vet ./...
+tidy-all:
+	@echo "Tidying all modules..."
+	@cd $(APP_DIRECTORY) && go mod tidy
+	@cd $(WORKER_DIRECTORY) && go mod tidy
+	@cd $(SHARED_DIRECTORY) && go mod tidy
+	@echo "Done tidying all modules"
+
+format-all:
+	@echo "Formatting and vetting all modules..."
+	@cd $(APP_DIRECTORY) && go fmt ./... && go vet ./...
+	@cd $(WORKER_DIRECTORY) && go fmt ./... && go vet ./...
+	@cd $(SHARED_DIRECTORY) && go fmt ./... && go vet ./...
+	@echo "Done formatting and vetting"
+
 
 t-db-up:
 	@migrate -database "$(TRANSACTION_DATABASE_URL)" -path migrations up

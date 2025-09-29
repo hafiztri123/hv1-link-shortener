@@ -5,12 +5,11 @@ import (
 	"hafiztri123/app-link-shortener/internal/api"
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/config"
-	"hafiztri123/app-link-shortener/internal/database"
 	"hafiztri123/app-link-shortener/internal/rabbitmq"
 	"hafiztri123/app-link-shortener/internal/redis"
-	"hafiztri123/app-link-shortener/internal/shared"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
+	"hpj/hv1-link-shortener/shared/database"
 	"log/slog"
 	"net/http"
 	"os"
@@ -60,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	rabbitmq, err := rabbitmq.NewRabbitMQ(cfg.RabbitMQAddr, shared.MainQueueLabel)
+	rabbitmq, err := rabbitmq.NewRabbitMQ(cfg.RabbitMQAddr, cfg.ClickQueueLabel)
 	if err != nil {
 		slog.Error("couldn't create new rabbitmq", "error", err)
 		os.Exit(1)

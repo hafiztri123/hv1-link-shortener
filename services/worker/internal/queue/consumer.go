@@ -91,7 +91,7 @@ func NewConsumer(addr, queueLabel string, metadataRepository *metadata.Repositor
 
 }
 
-func (c *Consumer) StartConsuming(ctx context.Context, handler func([]byte) error) error {
+func (c *Consumer) StartConsuming(ctx context.Context) error {
 	msgs, err := c.channel.Consume(
 		c.queueLabel,
 		"",

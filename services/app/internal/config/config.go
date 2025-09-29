@@ -12,6 +12,7 @@ type Config struct {
 	IDOffset     uint64
 	SecretKey    string
 	RabbitMQAddr string
+	ClickQueueLabel string
 }
 
 func Load() (*Config, error) {
@@ -48,6 +49,7 @@ func Load() (*Config, error) {
 		IDOffset:     convertedIdOffset,
 		SecretKey:    utils.GetEnvOrDefault("JWT", "secret"),
 		RabbitMQAddr: rabbitmqAddr,
+		ClickQueueLabel: utils.GetEnvOrDefault("CLICK_QUEUE_LABEL", "click_event"),
 	}, nil
 
 }

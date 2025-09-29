@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"hafiztri123/app-link-shortener/internal/auth"
+	"hafiztri123/app-link-shortener/internal/shared"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
 	"net/http"
@@ -471,7 +472,7 @@ func TestHandleFetchUserURLHistory(t *testing.T) {
 					UserID: 1,
 					Email:  "example@mail.com",
 				}
-				ctx := context.WithValue(rrl.Context(), auth.UserContextKey, claims)
+				ctx := context.WithValue(rrl.Context(), shared.UserContextKey, claims)
 				rrl = rrl.WithContext(ctx)
 
 			}
@@ -559,7 +560,7 @@ func TestHandleGenerateQR(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockUrlService := &mockURLService{}
 			tc.setMockUrlService(mockUrlService)
-			server := NewServer(nil, nil, mockUrlService, nil, nil)
+			server := NewServer(nil, nil, mockUrlService, nil, nil, nil)
 
 			reqCtx := chi.NewRouteContext()
 

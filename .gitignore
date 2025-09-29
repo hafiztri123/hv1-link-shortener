@@ -23,7 +23,6 @@
 # vendor/
 
 # Go workspace file
-go.work
 CLAUDE.md
 tmp
 *.mmdb

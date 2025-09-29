@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"hafiztri123/app-link-shortener/internal/shared"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ func TestGetUserFromContext(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			ctxWithValue := context.WithValue(ctx, UserContextKey, tc.claims)
+			ctxWithValue := context.WithValue(ctx, shared.UserContextKey, tc.claims)
 
 			claims, err := GetUserFromContext(ctxWithValue)
 			assert.ErrorIs(t, tc.wantErr, err)

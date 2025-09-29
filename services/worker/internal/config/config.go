@@ -6,11 +6,11 @@ import (
 )
 
 type Config struct {
-	RabbitMQAddr string
+	RabbitMQAddr    string
 	AnalyticsDBAddr string
-	QueueName string
-	WorkerCount int
-	BatchSize int
+	QueueName       string
+	WorkerCount     int
+	BatchSize       int
 	ProcessingDelay int
 }
 
@@ -29,15 +29,14 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	
-	return &Config{
-		RabbitMQAddr: getEnvOrDefault("RABBITMQ_ADDR", "amqp://guest:guest@localhost:5672/"),
-		AnalyticsDBAddr: getEnvOrDefault("ANALYTICS_DB", "analytics_db"),
-		QueueName: getEnvOrDefault("CLICKS_QUEUE", "click_events"),
-		WorkerCount: workerCount,
-		BatchSize: batchSize,
-		ProcessingDelay: processingDelay,
 
+	return &Config{
+		RabbitMQAddr:    getEnvOrDefault("RABBITMQ_ADDR", "amqp://guest:guest@localhost:5672/"),
+		AnalyticsDBAddr: getEnvOrDefault("ANALYTICS_DB", "analytics_db"),
+		QueueName:       getEnvOrDefault("CLICKS_QUEUE", "click_events"),
+		WorkerCount:     workerCount,
+		BatchSize:       batchSize,
+		ProcessingDelay: processingDelay,
 	}, nil
 
 }

@@ -45,5 +45,5 @@ tmp
 # Ignore all local history of files
 .history
 .ionide
-
+GeoLite2-City.mmdb:Zone
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,go

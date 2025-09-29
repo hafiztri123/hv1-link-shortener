@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build artifacts
+*.exe
+*.test
+*.out
+coverage.out
+
+# Vendor (if using)
+vendor/
+
+# Test files (optional - remove if you want to run tests in Docker)
+*_test.go
+test/
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Environment
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Data
+*.mmdb
+!GeoLite2-City.mmdb
+
+# Logs
+*.log
+logs/

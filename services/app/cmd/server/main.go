@@ -5,10 +5,11 @@ import (
 	"hafiztri123/app-link-shortener/internal/api"
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/config"
-	"hafiztri123/app-link-shortener/internal/database"
+	"hafiztri123/app-link-shortener/internal/rabbitmq"
 	"hafiztri123/app-link-shortener/internal/redis"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
+	"hpj/hv1-link-shortener/shared/database"
 	"log/slog"
 	"net/http"
 	"os"
@@ -52,13 +53,19 @@ func main() {
 	userRepo := user.NewRepository(db)
 	userService := user.NewService(db, userRepo, tokenService)
 
-	mmdb, err := maxminddb.Open("../../../../GeoLite2-City.mmdb")
+	mmdb, err := maxminddb.Open("GeoLite2-City.mmdb")
 	if err != nil {
 		slog.Error("couldn't find geolite mmdb", "err", err)
 		os.Exit(1)
 	}
 
-	server := api.NewServer(db, redis, urlService, userService, tokenService, mmdb)
+	rabbitmq, err := rabbitmq.NewRabbitMQ(cfg.RabbitMQAddr, cfg.ClickQueueLabel)
+	if err != nil {
+		slog.Error("couldn't create new rabbitmq", "error", err)
+		os.Exit(1)
+	}
+
+	server := api.NewServer(db, redis, urlService, userService, tokenService, mmdb, rabbitmq)
 	router := server.RegisterRoutes()
 
 	defer db.Close()

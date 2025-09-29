@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"hafiztri123/app-link-shortener/internal/url"
+	"hpj/hv1-link-shortener/shared/database"
 	"hpj/hv1-link-shortener/shared/migrations"
 	"testing"
 	"time"
@@ -59,7 +60,7 @@ func TestConnect_Success(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	// Test our Connect function
-	db := Connect(connStr)
+	db := database.Connect(connStr)
 	require.NotNil(t, db)
 
 	// Verify the connection works

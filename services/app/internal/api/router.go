@@ -3,6 +3,7 @@ package api
 import (
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/metrics"
+	"hafiztri123/app-link-shortener/internal/rabbitmq"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
 	"net/http"
@@ -25,16 +26,19 @@ type Server struct {
 	userService  user.UserService
 	tokenService *auth.TokenService
 	geoDb        *maxminddb.Reader
+	rabbitMq     *rabbitmq.RabbitMQ
 }
 
-func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService, geoDb *maxminddb.Reader) *Server {
+func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService, geoDb *maxminddb.Reader, rabbitMq *rabbitmq.RabbitMQ) *Server {
 	return &Server{
 		db:           db,
 		redis:        redis,
 		urlService:   urlService,
 		userService:  userService,
 		tokenService: ts,
-		geoDb:        geoDb}
+		geoDb:        geoDb,
+		rabbitMq:     rabbitMq,
+	}
 }
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -42,6 +46,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Use(RedisRateLimiter(s.redis, 20, 1*time.Minute))
 	r.Use(metrics.PrometheusMiddleware)
+	r.Use(MetadataMiddleware(s.geoDb))
 
 	r.Route("/api/v1", func(v1 chi.Router) {
 		v1.Get("/health", s.healthCheckHandler)
@@ -50,7 +55,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 		v1.Handle("/metrics", promhttp.Handler())
 
 		v1.Route("/url", func(url chi.Router) {
-			url.Use(MetadataMiddleware(s.geoDb))
 
 			url.Get("/{shortCode}", s.handleFetchURL)
 			url.Get("/{shortCode}/qr", s.handleGenerateQR)

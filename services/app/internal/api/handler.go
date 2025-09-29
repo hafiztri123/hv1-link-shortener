@@ -8,10 +8,13 @@ import (
 	"fmt"
 	"hafiztri123/app-link-shortener/internal/auth"
 	"hafiztri123/app-link-shortener/internal/response"
+	"hafiztri123/app-link-shortener/internal/shared"
 	"hafiztri123/app-link-shortener/internal/url"
 	"hafiztri123/app-link-shortener/internal/user"
 	"hafiztri123/app-link-shortener/internal/utils"
+	"hpj/hv1-link-shortener/shared/models"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -128,6 +131,21 @@ func (s *Server) handleFetchURL(w http.ResponseWriter, r *http.Request) {
 		}
 		response.Error(w, http.StatusInternalServerError, "Failed to fetch long URL")
 		return
+	}
+
+	slog.Info("redirecting to long URL", "short_code", shortCode, "long_url", longURL)
+
+	if value, ok := r.Context().Value(shared.ClickDataKey).(*models.Click); ok {
+		slog.Info("publishing click event", "click", value)
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if err := s.rabbitMq.PublishClickEvent(ctx, value); err != nil {
+				slog.Error("failed to publish click event", "error", err)
+			}
+		}()
+	} else {
+		slog.Info("click data not found in context")
 	}
 
 	http.Redirect(w, r, longURL, http.StatusMovedPermanently)

@@ -9,7 +9,7 @@ import (
 
 func TestLoad(t *testing.T) {
 	t.Run("success case - valid config", func(t *testing.T) {
-		t.Setenv("APP_URL", "localhost")
+		t.Setenv("DB_HOST", "localhost")
 		t.Setenv("DB_PORT", "5432")
 		t.Setenv("TRANSACTION_DB", "testdb")
 		t.Setenv("DB_USER", "testuser")

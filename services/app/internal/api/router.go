@@ -29,14 +29,16 @@ type Server struct {
 	rabbitMq 	*rabbitmq.RabbitMQ
 }
 
-func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService, geoDb *maxminddb.Reader) *Server {
+func NewServer(db DB, redis *redis.Client, urlService url.URLService, userService user.UserService, ts *auth.TokenService, geoDb *maxminddb.Reader, rabbitMq *rabbitmq.RabbitMQ) *Server {
 	return &Server{
 		db:           db,
 		redis:        redis,
 		urlService:   urlService,
 		userService:  userService,
 		tokenService: ts,
-		geoDb:        geoDb}
+		geoDb:        geoDb,
+		rabbitMq: rabbitMq,
+	}
 }
 
 func (s *Server) RegisterRoutes() http.Handler {
